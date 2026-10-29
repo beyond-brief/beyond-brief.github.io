@@ -122,6 +122,10 @@
     else if (b.dataset.eeNav) track("ee_view", { view: b.dataset.eeNav });
     else if (b.dataset.eeStage) track("ee_stage_change", { to: b.dataset.eeStage === "bulk" ? document.getElementById("ee-bulk-to")?.value : b.dataset.eeStage, bulk: b.dataset.eeStage === "bulk" ? "yes" : "no" });
     else if (b.dataset.eeSave) track("ee_notice", { action: b.dataset.eeSave });
+    else if (b.dataset.lyTab) track("ly_tab", { tab: b.dataset.lyTab });
+    else if (b.dataset.lyClaim) track("ly_mission_complete", { mission: b.dataset.lyClaim });
+    else if (b.dataset.lyRedeem) track("ly_redeem", { reward: b.dataset.lyRedeem });
+    else if (b.matches("[data-ly-reset]")) track("ly_reset");
   }, true);
 
   document.addEventListener("change", (e) => {

@@ -173,23 +173,3 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
       .finally(() => { btn.disabled = false; });
   });
 })();
-
-// Gamification challenge card: simulate progress towards the goal (nothing is stored or sent)
-document.querySelectorAll("[data-challenge]").forEach((card) => {
-  const steps = [...card.querySelectorAll(".mp-steps i")];
-  const status = card.querySelector("[data-status]");
-  const add = card.querySelector("[data-add]");
-  const reset = card.querySelector("[data-reset-challenge]");
-  let n = 0;
-  const draw = () => {
-    steps.forEach((s, i) => s.classList.toggle("on", i < n));
-    const done = n >= steps.length;
-    status.textContent = done ? "Challenge complete: next tier unlocked, bonus points added" : `${n} of ${steps.length} payments`;
-    status.classList.toggle("done", done);
-    add.disabled = done;
-    reset.hidden = !done;
-  };
-  add.addEventListener("click", () => { n = Math.min(steps.length, n + 1); draw(); if (n >= steps.length) reset.focus(); });
-  reset.addEventListener("click", () => { n = 0; draw(); add.focus(); });
-  draw();
-});
