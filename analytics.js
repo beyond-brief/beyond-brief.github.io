@@ -112,6 +112,10 @@
     else if (b.matches("[data-reset]")) c360("reset");
     else if (b.dataset.hxI) track("cios_step_view", { step: clean(b.textContent.replace(/^\d+/, "")) });
     else if (b.matches("[data-hx-approve]")) track("cios_approve");
+    else if (b.dataset.jlPersona) track("cx_lab_persona", { persona: b.dataset.jlPersona });
+    else if (b.dataset.jlMode) track("cx_lab_mode", { mode: b.dataset.jlMode === "imp" ? "improved" : "current" });
+    else if (b.dataset.jlStage) track("cx_lab_stage", { stage: clean(b.querySelector(".nm")?.textContent) });
+    else if (b.dataset.fid) track("cx_screen_version", { version: b.dataset.fid });
   }, true);
 
   document.addEventListener("change", (e) => {

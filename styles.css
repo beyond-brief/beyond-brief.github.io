@@ -1155,41 +1155,6 @@ a.ind:hover h3, a.ind:focus-visible h3 { color: var(--acc-text); }
 .posmap-notes p:last-child { margin: 0; font-weight: 500; }
 @media (max-width: 860px) { .posmap-body { grid-template-columns: 1fr; } .posmap-chart { border-right: 0; border-bottom: 1px solid var(--line); } }
 
-/* CX: journey map + persona */
-.jm-wrap { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
-.jm-body { padding: 18px 22px 24px; }
-.jm-curve { width: 100%; height: 120px; color: var(--ink); overflow: visible; }
-.jm-pt { fill: var(--white); stroke: var(--ink); stroke-width: 2; transition: fill .2s, r .2s; }
-.jm-pt.low { stroke: var(--accent); }
-.jm-pt.on { fill: var(--accent); stroke: var(--accent); r: 9; }
-.jm-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 10px 0 18px; }
-.jm-tabs button { display: grid; gap: 4px; text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--white); color: var(--ink); font-weight: 700; font-size: 14px; line-height: 1.25; cursor: pointer; transition: background-color .2s, border-color .2s, color .2s; }
-.jm-tabs button .n { font: 500 11px/1 var(--mono); color: var(--ink-2); }
-.jm-tabs button:hover { border-color: var(--ink); }
-.jm-tabs button[aria-selected="true"] { background: var(--ink); color: var(--text); border-color: var(--ink); }
-.jm-tabs button[aria-selected="true"] .n { color: var(--accent-soft); }
-.jm-panel dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; animation: panel-in .4s var(--ease); }
-.jm-panel dl > div { padding: 14px 16px; border-radius: 10px; background: var(--light); }
-.jm-panel dl > .pain, .jm-panel dl > .opp { grid-column: span 3; display: grid; grid-template-columns: 130px 1fr; gap: 12px; align-items: baseline; }
-.jm-panel dl > .pain { background: #FFE9D2; } .jm-panel dl > .pain dt { color: var(--warn); }
-.jm-panel dl > .opp { background: #E1EEFF; } .jm-panel dl > .opp dt { color: var(--accent-h); }
-.jm-panel dt { font: 700 11px/1.3 var(--mono); text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
-.jm-panel dd { margin: 0; font-weight: 500; font-size: 15.5px; }
-.persona { background: var(--ink); color: var(--text); border-radius: 16px; padding: 26px; display: flex; flex-direction: column; gap: 14px; }
-.persona .badge { align-self: flex-start; background: rgba(61,151,255,.16); color: var(--accent-soft); }
-.persona h3 { font-size: 26px; letter-spacing: -.03em; }
-.persona > p { margin: 0; color: var(--text-2); }
-.persona dl { margin: 0; display: grid; gap: 14px; }
-.persona dt { font: 700 11px/1.3 var(--mono); text-transform: uppercase; color: var(--accent-soft); margin-bottom: 4px; }
-.persona dd { margin: 0; font-size: 15.5px; }
-@media (max-width: 1000px) { .jm-wrap { grid-template-columns: 1fr; } }
-@media (max-width: 700px) {
-  .jm-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .jm-panel dl { grid-template-columns: 1fr; }
-  .jm-panel dl > .pain, .jm-panel dl > .opp { grid-column: auto; grid-template-columns: 1fr; gap: 0; }
-  .jm-body { padding: 14px 14px 18px; }
-}
-
 /* Growth: gamification mechanic */
 .mech-wrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
 .mech { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-left: 2px solid var(--line-2); }

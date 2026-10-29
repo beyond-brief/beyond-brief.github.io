@@ -174,30 +174,6 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
   });
 })();
 
-// Journey map: stage tabs (click + arrow keys) highlight the matching point on the emotion curve
-document.querySelectorAll("[data-journey]").forEach((map) => {
-  const tabs = [...map.querySelectorAll('[role="tab"]')];
-  const pts = [...map.querySelectorAll(".jm-pt")];
-  const select = (t) => tabs.forEach((x, i) => {
-    const on = x === t;
-    x.setAttribute("aria-selected", String(on));
-    x.tabIndex = on ? 0 : -1;
-    document.getElementById(x.getAttribute("aria-controls")).hidden = !on;
-    pts[i]?.classList.toggle("on", on);
-  });
-  tabs.forEach((t, i) => {
-    t.addEventListener("click", () => select(t));
-    t.addEventListener("keydown", (e) => {
-      const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-      if (!d) return;
-      e.preventDefault();
-      const n = tabs[(i + d + tabs.length) % tabs.length];
-      select(n); n.focus();
-    });
-  });
-  select(tabs.find((t) => t.getAttribute("aria-selected") === "true") || tabs[0]);
-});
-
 // Gamification challenge card: simulate progress towards the goal (nothing is stored or sent)
 document.querySelectorAll("[data-challenge]").forEach((card) => {
   const steps = [...card.querySelectorAll(".mp-steps i")];
