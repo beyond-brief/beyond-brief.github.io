@@ -225,15 +225,15 @@
       }
     }
 
-    /* ---------- Campaign Intelligence hand-off ---------- */
+    /* ---------- Customer Intelligence OS hand-off ---------- */
     function renderHandoff(d) {
-      const steps = ["Campaign brief", "Segment selection", "Journey planning", "Copywriting", "Visual production", "Review", "Approval", "Measurement"];
+      const steps = ["Customer 360", "Segments & signals", "Opportunity", "Offer", "Channel", "Prepare & approve"];
       const seg = d.segments.filter((s) => s.match).map((s) => s.name)[0] || "—";
-      $("[data-handoff]").innerHTML = `<div><span class="c3-k">From one customer to a campaign</span><h4>Customer 360 informs the brief. Campaign Intelligence runs the process.</h4>
-        <p>${d.offer ? `This decision would feed a brief for the <b>${esc(seg)}</b> audience, proposing <b>${esc(d.offer.name)}</b>${d.channel ? ` with <b>${L[d.channel]}</b> as the lead channel` : ", with consented customers only"}.` : "With no eligible offer, nothing would be handed to campaign planning."} The campaign workflow then takes it through:</p>
+      $("[data-handoff]").innerHTML = `<div><span class="c3-k">From one customer to a campaign</span><h4>Customer 360 decides for one customer. Customer Intelligence OS runs it as a campaign.</h4>
+        <p>${d.offer ? `This decision would feed a brief for the <b>${esc(seg)}</b> audience, proposing <b>${esc(d.offer.name)}</b>${d.channel ? ` with <b>${L[d.channel]}</b> as the lead channel` : ", with consented customers only"}.` : "With no eligible offer, nothing would be handed to campaign planning."} Across a whole audience, the campaign workflow takes the same decisions through:</p>
         <ol class="c3-ci">${steps.map((s, i) => `<li><span>${String(i + 1).padStart(2, "0")}</span>${s}</li>`).join("")}</ol>
-        <p class="c3-note">Conceptual connection. The two demonstrations don't share a live backend; this shows how the work would flow.</p>
-        <a class="tlink" href="/work/campaign-intelligence-platform">Open the Campaign Intelligence Platform <svg class="arr" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>`;
+        <p class="c3-note">Both demonstrations run the same rules on the same synthetic customers, so their decisions always match. Nothing is sent.</p>
+        <a class="tlink" href="/work/customer-intelligence-os">Open Customer Intelligence OS <svg class="arr" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>`;
     }
 
     /* ---------- Events ---------- */

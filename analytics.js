@@ -110,6 +110,8 @@
     else if (b.dataset.tab) c360("tab_view", { tab: b.dataset.tab });
     else if (b.dataset.step) c360("control_change", { control: "frequency" });
     else if (b.matches("[data-reset]")) c360("reset");
+    else if (b.dataset.hxI) track("cios_step_view", { step: clean(b.textContent.replace(/^\d+/, "")) });
+    else if (b.matches("[data-hx-approve]")) track("cios_approve");
   }, true);
 
   document.addEventListener("change", (e) => {
@@ -132,6 +134,7 @@
     if (choice === "granted") start();
     else if (choice !== "denied") banner();
     if (document.querySelector("[data-c360]")) track("c360_view");
+    if (document.querySelector("[data-cios]")) track("cios_view");
   };
   const ready = () => { const s = document.createElement("style"); s.textContent = css; document.head.appendChild(s); init(); };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", ready) : ready();
