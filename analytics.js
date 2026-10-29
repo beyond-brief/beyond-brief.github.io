@@ -118,12 +118,17 @@
     else if (b.dataset.fid) track("cx_screen_version", { version: b.dataset.fid });
     else if (b.dataset.lens) track("strat_lens", { lens: b.dataset.lens });
     else if (b.dataset.seg) track("strat_segment", { segment: b.dataset.seg });
+    else if (b.matches("[data-ee-enter]")) track("ee_enter");
+    else if (b.dataset.eeNav) track("ee_view", { view: b.dataset.eeNav });
+    else if (b.dataset.eeStage) track("ee_stage_change", { to: b.dataset.eeStage === "bulk" ? document.getElementById("ee-bulk-to")?.value : b.dataset.eeStage, bulk: b.dataset.eeStage === "bulk" ? "yes" : "no" });
+    else if (b.dataset.eeSave) track("ee_notice", { action: b.dataset.eeSave });
   }, true);
 
   document.addEventListener("change", (e) => {
     const ctl = e.target.closest("[data-ctl]");
     if (ctl) c360("control_change", { control: ctl.dataset.ctl });
     if (e.target.dataset.assumeKey) track("strat_assumption", { assumption: e.target.dataset.assumeKey });
+    if (e.target.matches("[data-ee-stagesel]")) track("ee_stage_change", { to: e.target.value, bulk: "no" });
   }, true);
 
   // Contact form: report only that a complete form was submitted, never what's in it.
