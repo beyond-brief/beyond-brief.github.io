@@ -2,9 +2,6 @@
    CX & UX service page: Journey Lab, insight-to-interface screen, capabilities.
    Uses the tokens from styles.css; nothing here changes colours or type.
    ========================================================================== */
-.jl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.cx-kick { margin-top: 48px; display: flex; }
-.cx-hero .phero-grid .h1 { margin-bottom: 0; }
 
 /* ---------- Journey Lab frame ---------- */
 .jl { --jl-line: rgba(16, 17, 20, .1); --jl-tint: rgba(8, 124, 255, .055); margin-top: clamp(40px, 5vw, 64px); background: var(--white); color: var(--ink); border: 1px solid var(--jl-line); border-radius: 22px; box-shadow: 0 1px 0 rgba(16,17,20,.03), 0 40px 80px -48px rgba(16,17,20,.35); overflow: hidden; }
@@ -221,18 +218,6 @@
 .cx-phone[data-fidelity="wire"] .cx-btn .t { background: #DCE1E9; }
 .cx-phone[data-fidelity="wire"] .cx-btn:not(.ghost) { background: #EEF1F5; }
 
-/* ---------- Capabilities ---------- */
-.cx-legend { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font: 700 11.5px/1.3 var(--mono); text-transform: uppercase; color: var(--fg-2); }
-.cx-legend i, .cx-cap li.seen::before { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-.cx-caps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
-.cx-cap { padding: 28px 28px 30px 0; }
-.cx-cap + .cx-cap { padding-left: 28px; border-left: 1px solid var(--line); }
-.cx-cap h3 { display: flex; align-items: baseline; gap: 12px; font-size: 22px; letter-spacing: -.02em; margin-bottom: 18px; }
-.cx-cap .n { font: 500 13px/1.2 var(--mono); color: var(--acc-text); }
-.cx-cap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.cx-cap li { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--white); font-size: 14px; line-height: 1.3; color: var(--fg-2); }
-.cx-cap li.seen { color: var(--fg); border-color: rgba(8,124,255,.35); }
-.cx-cap li.seen::before { content: ""; flex: none; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
@@ -242,7 +227,7 @@
   .jl-persona dl { grid-column: 2; grid-row: 1 / span 4; }
   .jl-sector { grid-column: 1; margin-top: 0; }
 }
-@media (max-width: 1000px) { .cx-fid { grid-template-columns: 1fr; } .cx-caps { grid-template-columns: 1fr; } .cx-cap, .cx-cap + .cx-cap { padding: 24px 0; border-left: 0; } .cx-cap + .cx-cap { border-top: 1px solid var(--line); } }
+@media (max-width: 1000px) { .cx-fid { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .jl-bar { padding: 12px; }
   .jl-people { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
@@ -292,10 +277,4 @@
   .cx-fid-copy { display: contents; }
   .cx-phone-wrap { order: 1; margin-top: 36px; }
   .cx-notes { order: 2; }
-}
-/* Capabilities as three rows: discipline on the left, the full list flowing to the right */
-@media (min-width: 1001px) {
-  .cx-caps { grid-template-columns: 1fr; }
-  .cx-cap, .cx-cap + .cx-cap { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; align-items: start; padding: 26px 0; border-left: 0; border-bottom: 1px solid var(--line); }
-  .cx-cap h3 { margin: 4px 0 0; }
 }

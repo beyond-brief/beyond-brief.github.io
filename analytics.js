@@ -116,11 +116,14 @@
     else if (b.dataset.jlMode) track("cx_lab_mode", { mode: b.dataset.jlMode === "imp" ? "improved" : "current" });
     else if (b.dataset.jlStage) track("cx_lab_stage", { stage: clean(b.querySelector(".nm")?.textContent) });
     else if (b.dataset.fid) track("cx_screen_version", { version: b.dataset.fid });
+    else if (b.dataset.lens) track("strat_lens", { lens: b.dataset.lens });
+    else if (b.dataset.seg) track("strat_segment", { segment: b.dataset.seg });
   }, true);
 
   document.addEventListener("change", (e) => {
     const ctl = e.target.closest("[data-ctl]");
     if (ctl) c360("control_change", { control: ctl.dataset.ctl });
+    if (e.target.dataset.assumeKey) track("strat_assumption", { assumption: e.target.dataset.assumeKey });
   }, true);
 
   // Contact form: report only that a complete form was submitted, never what's in it.

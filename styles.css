@@ -1139,21 +1139,6 @@ a.ind:hover h3, a.ind:focus-visible h3 { color: var(--acc-text); }
 .viz figcaption { padding: 12px 18px; border-top: 1px solid var(--line); background: var(--light); }
 .viz-note { margin: 16px 0 0; }
 
-/* Strategy: opportunity map */
-.posmap-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 0; }
-.posmap-chart { position: relative; padding: 28px 28px 40px 44px; color: var(--ink); border-right: 1px solid var(--line); }
-.posmap-chart svg { width: 100%; height: auto; }
-.posmap-chart .inv { fill: var(--white); }
-.posmap .ax { position: absolute; font: 500 11.5px/1.2 var(--mono); text-transform: uppercase; color: var(--ink-2); }
-.posmap .ax-x { right: 28px; bottom: 14px; }
-.posmap .ax-y { left: 14px; top: 28px; writing-mode: vertical-rl; transform: rotate(180deg); }
-.posmap-notes { padding: 28px; }
-.posmap-notes .k { font: 700 11.5px/1.3 var(--mono); text-transform: uppercase; color: var(--accent-h); margin: 0 0 12px; }
-.posmap-notes ol { margin: 0 0 24px; padding-left: 20px; display: grid; gap: 10px; }
-.posmap-notes li { color: var(--ink-2); }
-.posmap-notes li b { color: var(--ink); }
-.posmap-notes p:last-child { margin: 0; font-weight: 500; }
-@media (max-width: 860px) { .posmap-body { grid-template-columns: 1fr; } .posmap-chart { border-right: 0; border-bottom: 1px solid var(--line); } }
 
 /* Growth: gamification mechanic */
 .mech-wrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
@@ -1395,3 +1380,19 @@ a.rp:hover, a.rp:focus-visible { border-color: var(--accent); transform: transla
 /* Long option labels must not widen the single-column layout on phones */
 .split > * { min-width: 0; }
 .form select { width: 100%; min-width: 0; text-overflow: ellipsis; }
+
+/* ---------- Service pages: pieces shared by the interactive service pages ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.svc-kick { margin-top: 48px; display: flex; }
+.phero .svc-h1 { margin-bottom: 0; }
+.cap-legend { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font: 700 11.5px/1.3 var(--mono); text-transform: uppercase; color: var(--fg-2); }
+.cap-legend i, .cap-row li.seen::before { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.cap-index { border-top: 1px solid var(--line); }
+.cap-row { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; align-items: start; padding: 26px 0; border-bottom: 1px solid var(--line); }
+.cap-row h3 { display: flex; align-items: baseline; gap: 12px; font-size: 22px; letter-spacing: -.02em; margin: 4px 0 0; }
+.cap-row .n { font: 500 13px/1.2 var(--mono); color: var(--acc-text); }
+.cap-row ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.cap-row li { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); font-size: 14px; line-height: 1.3; color: var(--fg-2); }
+.cap-row li.seen { color: var(--fg); border-color: rgba(8,124,255,.35); }
+.cap-row li.seen::before { content: ""; flex: none; }
+@media (max-width: 1000px) { .cap-row { grid-template-columns: 1fr; gap: 16px; padding: 24px 0; } }

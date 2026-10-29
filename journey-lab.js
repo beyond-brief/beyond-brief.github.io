@@ -109,7 +109,7 @@
     si = worst(p);
 
     const glyph = (k) => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">${GLYPH[CH[k][1]]}</svg>`;
-    const chip = (k, cls = "") => `<li class="jl-tp ${cls}">${glyph(k)}<span>${CH[k][0]}</span>${cls === "add" ? '<em>New</em>' : ""}${cls === "gone" ? '<em class="jl-sr">removed</em>' : ""}</li>`;
+    const chip = (k, cls = "") => `<li class="jl-tp ${cls}">${glyph(k)}<span>${CH[k][0]}</span>${cls === "add" ? '<em>New</em>' : ""}${cls === "gone" ? '<em class="sr-only">removed</em>' : ""}</li>`;
     const tps = (s) => {
       if (mode === "cur") return s.cur.tp.map((k) => chip(k)).join("");
       const kept = s.imp.tp.map((k) => chip(k, s.cur.tp.includes(k) ? "" : "add"));
@@ -158,7 +158,7 @@
         </div>
       </div>
       <div class="jl-foot"><dl class="jl-metrics" data-jl-metrics></dl><p class="jl-note">Synthetic personas and journeys, built to show the method. Counts come from this illustrative journey, not from research.</p></div>
-      <p class="jl-sr" aria-live="polite" data-jl-live></p>`;
+      <p class="sr-only" aria-live="polite" data-jl-live></p>`;
 
     const $ = (s) => lab.querySelector(s);
     const tabs = [...lab.querySelectorAll('[role="tab"]')];
