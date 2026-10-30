@@ -129,97 +129,168 @@
   const freshDraft = (venue = "saffron") => ({ venue, date: DATES[1], party: 2, time: null, table: null, occasion: "None", prefs: [], note: "", editing: null });
   const ui = { view: "discover", venue: "saffron", course: "start", vegOnly: false, draft: freshDraft(), confirm: null, cancelAsk: null, msg: "" };
 
-  /* ---------- Art ---------- */
-  const TONE = { ember: ["#2A1611", "#B5532B", "#E8A55A", "#F6E7D2"], sea: ["#0F2A3A", "#23607E", "#7FB6C9", "#EAF2F2"], olive: ["#1C1F16", "#4B5A3C", "#B89650", "#EFE9DA"] };
-  function cover(v, cls = "") {
-    const [dark, main, light, paper] = TONE[VENUE[v].tone];
-    const scene = {
-      saffron: `<rect width="400" height="260" fill="${dark}"/><circle cx="300" cy="70" r="90" fill="${main}" opacity=".35"/><path d="M0 200h400v60H0z" fill="#3A2016"/>
-        <path d="M118 0v58" stroke="${light}" stroke-width="1.5"/><path d="M98 58h40l-8 16h-24z" fill="${light}"/><ellipse cx="118" cy="82" rx="46" ry="10" fill="${light}" opacity=".25"/>
-        <ellipse cx="200" cy="196" rx="150" ry="22" fill="#5A3322"/><ellipse cx="150" cy="186" rx="34" ry="9" fill="${paper}"/><ellipse cx="150" cy="184" rx="18" ry="4.5" fill="${main}"/><ellipse cx="250" cy="186" rx="34" ry="9" fill="${paper}"/><ellipse cx="250" cy="184" rx="16" ry="4" fill="#6B8F3A"/>
-        <path d="M320 150c6-16 16-20 14-36 10 12 12 22 8 36z" fill="${light}"/><path d="M326 150c3-8 8-10 7-18 5 6 6 11 4 18z" fill="#FFE2A8"/>`,
-      mareya: `<rect width="400" height="260" fill="${paper}"/><rect x="0" y="0" width="400" height="150" fill="${light}" opacity=".55"/><path d="M0 120c60-8 120 8 200 0s140-10 200 0v30H0z" fill="${main}" opacity=".7"/><circle cx="310" cy="58" r="24" fill="#F6D58A"/>
-        <path d="M0 150h400" stroke="${dark}" stroke-width="3"/><path d="M100 0v150M300 0v150" stroke="${dark}" stroke-width="3"/>
-        <ellipse cx="200" cy="214" rx="160" ry="26" fill="#E5DACA"/><ellipse cx="200" cy="206" rx="52" ry="13" fill="#fff"/><path d="M168 205c14-10 44-10 60 0-14 8-44 8-60 0z" fill="#C9C2B0"/><path d="M228 205l12-7v14z" fill="#C9C2B0"/><circle cx="182" cy="203" r="2" fill="${dark}"/>`,
-      oda: `<rect width="400" height="260" fill="${dark}"/><rect x="0" y="150" width="400" height="16" fill="${light}" opacity=".85"/><rect x="0" y="166" width="400" height="94" fill="#2B3022"/>
-        ${[70, 160, 250, 340].map((x) => `<path d="M${x} 0v52" stroke="${light}" stroke-width="1.2"/><path d="M${x - 16} 52h32l-6 12h-20z" fill="${light}"/><ellipse cx="${x}" cy="74" rx="34" ry="8" fill="${light}" opacity=".18"/>`).join("")}
-        ${[90, 200, 310].map((x) => `<ellipse cx="${x}" cy="148" rx="26" ry="6" fill="${paper}"/><circle cx="${x}" cy="145" r="6" fill="${main}"/><circle cx="${x + 9}" cy="146" r="3" fill="#C0452E"/>`).join("")}
-        ${[60, 130, 200, 270, 340].map((x) => `<rect x="${x - 10}" y="190" width="20" height="5" rx="2" fill="${light}"/><path d="M${x} 195v40" stroke="${light}" stroke-width="2"/>`).join("")}`,
-    }[v];
-    return `<svg class="hs-cover-art ${cls}" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${scene}</svg>`;
-  }
-  function plate([sauce, main, garnish], i = 0) {
+  const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ZONES = {
+    fire: "Closest to the hearth. Warm, lively, and you can watch the kitchen work.",
+    window: "Two-tops along the street windows. Quieter, softly lit.",
+    court: "A heated courtyard under string lights and potted olive trees.",
+    sea: "A row of tables along the glass, facing the water at sunset.",
+    main: "The heart of the room, under linen pendants.",
+    nook: "A curtained alcove with one long table for up to eight.",
+    counter: "Six seats facing the chefs. Every course is handed across.",
+    booth: "Low velvet booths for four, a little more private.",
+  };
+  const zoneOf = (v, tableId) => VENUE[v].zones.find((z) => z.id === tableList(v).find((t) => t.id === tableId)?.zone);
+
+  /* ---------- Art: hand-built 2D dining rooms (inline SVG) ---------- */
+  let uid = 0;
+  const stops = (s) => s.map(([o, c, a = 1]) => `<stop offset="${o}" stop-color="${c}" stop-opacity="${a}"/>`).join("");
+  const lin = (id, s, x2 = 0, y2 = 1) => `<linearGradient id="${id}" x1="0" y1="0" x2="${x2}" y2="${y2}">${stops(s)}</linearGradient>`;
+  const rad = (id, s) => `<radialGradient id="${id}">${stops(s)}</radialGradient>`;
+  const base = (u) => rad(`gl${u}`, [[0, "#FFC983", 0.8], [1, "#FFC983", 0]]) + rad(`sh${u}`, [[0, "#000", 0.55], [1, "#000", 0]]) + lin(`cn${u}`, [[0, "#FFDDA6", 0.5], [1, "#FFDDA6", 0]]);
+  const grain = (u, w, h) => `<filter id="g${u}" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .1  0 0 0 0 .06  0 0 0 0 .03  0 0 0 .55 -.2"/></filter><rect width="${w}" height="${h}" filter="url(#g${u})" opacity=".6"/>`;
+  const glow = (u, x, y, r, o = 1) => `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#gl${u})" opacity="${o}"/>`;
+  const shadow = (u, x, y, rx, ry) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="url(#sh${u})"/>`;
+  const lamp = (u, x, y, w, c = "#C08A4A", cone = 0.55) => `<path d="M${x} -10V${y}" stroke="${c}" stroke-opacity=".7" stroke-width="1.5"/><path d="M${x - w * 1.5} ${y + w * 3.6}L${x - w / 2} ${y + w * 0.42}h${w}L${x + w * 1.5} ${y + w * 3.6}z" fill="url(#cn${u})" opacity="${cone}"/><path d="M${x - w / 2} ${y + w * 0.42}L${x - w * 0.18} ${y}h${w * 0.36}L${x + w / 2} ${y + w * 0.42}z" fill="${c}"/><ellipse cx="${x}" cy="${y + w * 0.43}" rx="${w * 0.48}" ry="${w * 0.07}" fill="#FFE6B8"/>`;
+  const globe = (u, x, y, r) => `<path d="M${x} -10V${y - r}" stroke="#BFA77A" stroke-opacity=".6"/>${glow(u, x, y, r * 4, 0.7)}<circle cx="${x}" cy="${y}" r="${r}" fill="#F7DFA8"/><circle cx="${x - r * 0.3}" cy="${y - r * 0.3}" r="${r * 0.35}" fill="#FFF6DD"/>`;
+  const candle = (u, x, y, s = 1) => `${glow(u, x, y - 12 * s, 34 * s, 0.9)}<rect x="${x - 3 * s}" y="${y - 10 * s}" width="${6 * s}" height="${12 * s}" rx="${1.5 * s}" fill="#F3E9D6"/><path d="M${x} ${y - 20 * s}c-3 4-3 7 0 9 3-2 3-5 0-9z" fill="#FFD27A"/>`;
+  const plate = (x, y, r, food) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.27}" fill="#F2E9DA"/><ellipse cx="${x}" cy="${y - 1}" rx="${r * 0.62}" ry="${r * 0.16}" fill="#E4D8C4"/><ellipse cx="${x - r * 0.08}" cy="${y - 2}" rx="${r * 0.32}" ry="${r * 0.1}" fill="${food}"/>`;
+  const glass = (x, y, s = 1, wine = "#6B1E2E") => `<path d="M${x - 7 * s} ${y - 30 * s}h${14 * s}c0 12-3 17-7 17s-7-5-7-17z" fill="#fff" fill-opacity=".14" stroke="#fff" stroke-opacity=".35"/><path d="M${x - 6 * s} ${y - 22 * s}h${12 * s}c-1 6-3 8-6 8s-5-2-6-8z" fill="${wine}"/><path d="M${x} ${y - 13 * s}v${12 * s}M${x - 6 * s} ${y - 1}h${12 * s}" stroke="#fff" stroke-opacity=".4"/>`;
+  const roundTable = (u, x, y, rx, cloth = "#EDE5D7", foods = ["#B5532B", "#6E7A55"]) => `${shadow(u, x, y + rx * 0.5, rx * 1.15, rx * 0.16)}<path d="M${x - rx} ${y}v${rx * 0.42}c${rx * 0.4} ${rx * 0.12} ${rx * 1.6} ${rx * 0.12} ${rx * 2} 0V${y}z" fill="${cloth}" opacity=".82"/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${rx * 0.24}" fill="${cloth}"/>${plate(x - rx * 0.45, y + 2, rx * 0.26, foods[0])}${plate(x + rx * 0.45, y + 2, rx * 0.26, foods[1])}${glass(x - rx * 0.1, y - 2, rx / 90)}${glass(x + rx * 0.12, y - 4, rx / 90, "#E9D98A")}`;
+  const chairBack = (x, y, w, h, c = "#100C0A") => `<rect x="${x - w / 2}" y="${y - h}" width="${w}" height="${h}" rx="${w * 0.3}" fill="${c}"/>`;
+  const olive = (x, y, s = 1, c = "#6E7A55") => `<path d="M${x} ${y}c${10 * s} ${-30 * s} ${30 * s} ${-50 * s} ${60 * s} ${-64 * s}" stroke="#4A4A32" stroke-width="${2 * s}" fill="none"/>${[[12, -18, -40], [22, -32, 30], [34, -42, -30], [46, -52, 40], [18, -30, 50], [40, -46, -10]].map(([dx, dy, r]) => `<ellipse cx="${x + dx * s}" cy="${y + dy * s}" rx="${9 * s}" ry="${3.6 * s}" fill="${c}" transform="rotate(${r} ${x + dx * s} ${y + dy * s})"/>`).join("")}`;
+  const flames = (x, y, s = 1) => `<path d="M${x - 40 * s} ${y}c-4-30 14-40 10-70 14 18 22 34 18 52 6-14 4-30 14-46 16 26 22 46 12 64z" fill="#E8742F"/><path d="M${x - 22 * s} ${y}c-2-20 8-26 6-46 10 12 14 24 10 34 4-8 4-18 10-28 10 18 12 30 6 40z" fill="#FFB347"/><path d="M${x - 10 * s} ${y}c0-12 4-16 4-28 6 8 8 16 6 28z" fill="#FFE29A"/>`;
+  const svg = (w, h, body, label, fit = "xMidYMid") => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="${fit} slice" ${label ? `role="img" aria-label="${esc(label)}"` : 'aria-hidden="true"'}>${body}</svg>`;
+
+  const VENUE_ART = {
+    saffron: (u) => `<defs>${base(u)}${lin(`w${u}`, [[0, "#2E1C14"], [1, "#160E0B"]])}${lin(`f${u}`, [[0, "#3A2418"], [1, "#1B110C"]])}${lin(`t${u}`, [[0, "#74452C"], [1, "#3B2217"]])}${rad(`h${u}`, [[0, "#FF9248", 0.95], [0.5, "#C2462A", 0.6], [1, "#2A120A", 0]])}<pattern id="b${u}" width="44" height="18" patternUnits="userSpaceOnUse"><path d="M0 .5h44M0 9.5h44M22 0v9M.5 9v9" stroke="#000" stroke-opacity=".28"/></pattern></defs>
+      <rect width="800" height="500" fill="url(#w${u})"/>
+      ${[150, 400, 650].map((x) => `<path d="M${x - 105} 372V170a105 105 0 0 1 210 0v202z" fill="#3B2419"/><path d="M${x - 105} 372V170a105 105 0 0 1 210 0v202z" fill="url(#b${u})"/><path d="M${x - 82} 372V176a82 82 0 0 1 164 0v196z" fill="${x === 400 ? "#120A07" : "#1A100C"}"/>`).join("")}
+      <circle cx="400" cy="330" r="120" fill="url(#h${u})"/>${flames(410, 352, 1.2)}<rect x="350" y="350" width="104" height="12" rx="6" fill="#2A160E"/><rect x="362" y="342" width="84" height="10" rx="5" fill="#3A2016" transform="rotate(-6 404 347)"/>
+      ${[80, 120, 160].map((y) => `<path d="M${150 - 70} ${y + 140}h140M${650 - 70} ${y + 140}h140" stroke="#4A3022" stroke-width="4"/>`).join("")}
+      ${[[100, 206, "#C2643F"], [126, 210, "#E3A35B"], [176, 204, "#6E7A55"], [196, 250, "#EFE2CF"], [120, 248, "#9C3D2E"], [610, 204, "#E3A35B"], [660, 208, "#C2643F"], [700, 246, "#EFE2CF"], [630, 250, "#6E7A55"]].map(([x, y, c]) => `<rect x="${x - 8}" y="${y + 70 - 24}" width="16" height="24" rx="5" fill="${c}" opacity=".8"/>`).join("")}
+      <rect y="372" width="800" height="128" fill="url(#f${u})"/>
+      ${lamp(u, 250, 70, 50)}${lamp(u, 550, 70, 50)}
+      ${chairBack(210, 408, 34, 44)}${chairBack(330, 408, 34, 44)}${chairBack(470, 408, 34, 44)}${chairBack(590, 408, 34, 44)}
+      <path d="M150 412h500l70 88H80z" fill="url(#t${u})"/><path d="M150 412h500" stroke="#B07A50" stroke-width="2" opacity=".6"/><path d="M180 440h440M140 470h520" stroke="#2A170F" opacity=".4"/>
+      ${plate(230, 434, 36, "#C2643F")}${plate(350, 438, 38, "#6E7A55")}${plate(470, 438, 38, "#E3A35B")}${plate(590, 434, 36, "#9C3D2E")}
+      ${glass(290, 430, 1.1)}${glass(530, 430, 1.1)}${candle(u, 410, 424, 1.1)}
+      <rect width="800" height="500" fill="#C2643F" opacity=".06"/>${grain(u, 800, 500)}`,
+    mareya: (u) => `<defs>${base(u)}${lin(`w${u}`, [[0, "#1E2A31"], [1, "#11191E"]])}${lin(`k${u}`, [[0, "#22344A"], [0.42, "#5A5C72"], [0.72, "#C2795A"], [0.86, "#EBB385"], [1, "#F4CC9C"]])}${lin(`s${u}`, [[0, "#3B5763"], [1, "#1E323B"]])}${lin(`f${u}`, [[0, "#2E2722"], [1, "#171310"]])}</defs>
+      <rect width="800" height="500" fill="url(#w${u})"/>
+      <rect x="60" y="34" width="680" height="268" fill="url(#k${u})"/><rect x="60" y="250" width="680" height="52" fill="url(#s${u})"/>
+      <circle cx="520" cy="248" r="20" fill="#F7C892"/><rect x="510" y="252" width="20" height="50" fill="#F2B27A" opacity=".45"/>${[262, 272, 282, 292].map((y, i) => `<path d="M${470 + i * 6} ${y}h${100 - i * 12}" stroke="#F7C892" stroke-opacity="${0.5 - i * 0.1}"/>`).join("")}
+      ${[[150, 266], [330, 280], [640, 262]].map(([x, y]) => `<path d="M${x} ${y}h60" stroke="#9CB4BD" stroke-opacity=".3"/>`).join("")}
+      <path d="M60 34h680v268H60z" fill="none" stroke="#0B1114" stroke-width="10"/><path d="M286 34v268M513 34v268M60 104h680" stroke="#0B1114" stroke-width="7"/>
+      <rect y="302" width="800" height="198" fill="url(#f${u})"/><path d="M0 302h800" stroke="#000" stroke-opacity=".4"/>
+      ${chairBack(140, 382, 30, 50, "#0B1012")}${chairBack(250, 382, 30, 50, "#0B1012")}${chairBack(560, 376, 30, 50, "#0B1012")}${chairBack(700, 376, 30, 50, "#0B1012")}
+      ${roundTable(u, 195, 392, 92, "#EEE7DB", ["#C2795A", "#9CB4BD"])}${roundTable(u, 630, 386, 86, "#EEE7DB", ["#E7B44C", "#C0452E"])}${roundTable(u, 420, 448, 118, "#F1EAE0", ["#D27C55", "#6E7A55"])}
+      ${candle(u, 195, 388, 0.9)}${candle(u, 630, 382, 0.9)}${candle(u, 420, 444, 1.1)}
+      <rect width="800" height="500" fill="#F2B27A" opacity=".05"/>${grain(u, 800, 500)}`,
+    oda: (u) => `<defs>${base(u)}${lin(`w${u}`, [[0, "#1A1D14"], [1, "#0D0F0A"]])}${lin(`p${u}`, [[0, "#F0C97E", 0.85], [1, "#F0C97E", 0.05]])}${lin(`c${u}`, [[0, "#D2AB72"], [1, "#9C7546"]])}${lin(`n${u}`, [[0, "#2B2C20"], [1, "#16170F"]])}</defs>
+      <rect width="800" height="500" fill="url(#w${u})"/>
+      ${[96, 166].map((y) => `<rect x="70" y="${y}" width="660" height="7" fill="#3E3826"/>`).join("")}
+      ${[[100, 96, 16, 22, "#B8A98A"], [140, 96, 24, 14, "#6E7A55"], [190, 96, 14, 26, "#8A3B3B"], [240, 96, 26, 16, "#D9CFB8"], [300, 96, 14, 20, "#B89650"], [560, 96, 22, 14, "#D9CFB8"], [610, 96, 14, 24, "#6E7A55"], [660, 96, 24, 18, "#8A3B3B"], [120, 166, 22, 16, "#D9CFB8"], [170, 166, 14, 24, "#B89650"], [580, 166, 26, 14, "#B8A98A"], [640, 166, 16, 22, "#D9CFB8"], [690, 166, 20, 14, "#6E7A55"]].map(([x, y, w, h, c]) => `<rect x="${x - w / 2}" y="${y - h}" width="${w}" height="${h}" rx="${Math.min(w, h) / 2.4}" fill="${c}" opacity=".85"/>`).join("")}
+      <rect x="250" y="190" width="300" height="118" fill="#1D1A12"/><rect x="250" y="190" width="300" height="118" fill="url(#p${u})"/>${[300, 360, 430, 500].map((x, i) => `<path d="M${x} ${300 - i * 4}c-8-14 8-24 0-38s8-22 0-34" stroke="#FFF2D6" stroke-opacity=".25" stroke-width="2" fill="none"/>`).join("")}
+      ${globe(u, 160, 150, 15)}${globe(u, 320, 120, 15)}${globe(u, 480, 120, 15)}${globe(u, 640, 150, 15)}
+      ${olive(70, 70, 1.4)}
+      <rect x="0" y="322" width="800" height="24" fill="url(#c${u})"/><path d="M0 322h800" stroke="#F3D9A8" stroke-opacity=".6"/><rect x="0" y="346" width="800" height="154" fill="url(#n${u})"/>${Array.from({ length: 27 }, (_, i) => `<path d="M${i * 30 + 15} 352v148" stroke="#000" stroke-opacity=".28"/>`).join("")}
+      ${plate(200, 322, 30, "#7A2E3A")}${plate(400, 322, 30, "#E57A63")}${plate(600, 322, 30, "#7A8C3A")}${glass(260, 320, 0.9, "#8B2E3A")}${glass(660, 320, 0.9, "#E9D98A")}
+      ${[130, 265, 400, 535, 670].map((x) => `${shadow(u, x, 492, 40, 6)}<path d="M${x - 16} 418l-10 82M${x + 16} 418l10 82" stroke="#1B140C" stroke-width="4"/><ellipse cx="${x}" cy="414" rx="36" ry="9" fill="#8E6B43"/><ellipse cx="${x}" cy="411" rx="30" ry="6" fill="#A98257"/>`).join("")}
+      ${grain(u, 800, 500)}`,
+  };
+  const ZONE_ART = {
+    fire: (u) => `<defs>${base(u)}${rad(`h${u}`, [[0, "#FF9248", 0.95], [0.6, "#C2462A", 0.4], [1, "#2A120A", 0]])}</defs><rect width="400" height="260" fill="#1C120D"/><path d="M110 200V110a90 90 0 0 1 180 0v90z" fill="#3B2419"/><path d="M130 200V114a70 70 0 0 1 140 0v86z" fill="#100906"/><circle cx="200" cy="180" r="80" fill="url(#h${u})"/>${flames(210, 196, 0.9)}<rect y="200" width="400" height="60" fill="#2A1A12"/>${chairBack(110, 236, 28, 40)}${roundTable(u, 160, 240, 70, "#5A3524", ["#C2643F", "#E3A35B"])}${candle(u, 160, 236, 0.7)}${grain(u, 400, 260)}`,
+    window: (u) => `<defs>${base(u)}${lin(`k${u}`, [[0, "#141C2A"], [1, "#2C3346"]])}</defs><rect width="400" height="260" fill="#21150F"/><rect x="60" y="24" width="280" height="150" fill="url(#k${u})"/>${[[110, 120], [200, 96], [290, 120]].map(([x, y]) => `${glow(u, x, y, 40, 0.5)}<circle cx="${x}" cy="${y}" r="5" fill="#FFD9A0"/><path d="M${x} ${y + 5}V174" stroke="#0B0F16" stroke-width="3"/>`).join("")}<path d="M60 24h280v150H60zM200 24v150" fill="none" stroke="#120B08" stroke-width="8"/><rect y="174" width="400" height="86" fill="#2E1D14"/>${chairBack(150, 216, 26, 40)}${chairBack(250, 216, 26, 40)}${roundTable(u, 200, 226, 64, "#EDE5D7", ["#C2643F", "#6E7A55"])}${candle(u, 200, 222, 0.7)}${grain(u, 400, 260)}`,
+    court: (u) => `<defs>${base(u)}${lin(`k${u}`, [[0, "#14141E"], [1, "#3A2A22"]])}</defs><rect width="400" height="260" fill="url(#k${u})"/>${[40, 120, 200, 280, 360].map((x, i, a) => i < a.length - 1 ? `<path d="M${x} 40Q${x + 40} 70 ${a[i + 1]} 40" stroke="#2A2018" fill="none"/>` : "").join("")}${Array.from({ length: 16 }, (_, i) => { const x = 50 + i * 20, y = 40 + Math.sin(((i % 4) / 4) * Math.PI) * 14; return `${glow(u, x, y, 12, 0.7)}<circle cx="${x}" cy="${y}" r="2.6" fill="#FFE2A8"/>`; }).join("")}
+      <path d="M60 200v-60" stroke="#3A2C1E" stroke-width="5"/><ellipse cx="60" cy="130" rx="40" ry="28" fill="#4B5A3C"/><ellipse cx="44" cy="120" rx="20" ry="14" fill="#5E7048"/><path d="M340 200v-60" stroke="#3A2C1E" stroke-width="5"/><ellipse cx="340" cy="128" rx="42" ry="30" fill="#4B5A3C"/>
+      <path d="M268 200v-96" stroke="#7A6A55" stroke-width="3"/><path d="M252 104h32l-6-10h-20z" fill="#7A6A55"/>${glow(u, 268, 110, 46, 0.6)}<rect y="200" width="400" height="60" fill="#3A2A1F"/><path d="M0 200h400" stroke="#C2643F" stroke-opacity=".3"/>${roundTable(u, 170, 222, 64, "#EDE5D7", ["#E3A35B", "#6E7A55"])}${candle(u, 170, 218, 0.7)}${grain(u, 400, 260)}`,
+    sea: (u) => `<defs>${base(u)}${lin(`k${u}`, [[0, "#2A3B4E"], [0.55, "#B9785D"], [1, "#F0C392"]])}</defs><rect width="400" height="260" fill="#162026"/><rect x="20" y="20" width="360" height="150" fill="url(#k${u})"/><rect x="20" y="138" width="360" height="32" fill="#2C4651"/><circle cx="270" cy="136" r="14" fill="#F7C892"/><rect x="262" y="140" width="16" height="30" fill="#F2B27A" opacity=".4"/><path d="M20 20h360v150H20zM140 20v150M260 20v150" fill="none" stroke="#0B1114" stroke-width="7"/><rect y="170" width="400" height="90" fill="#231D19"/>${roundTable(u, 200, 214, 84, "#EEE7DB", ["#C2795A", "#9CB4BD"])}${candle(u, 200, 210, 0.8)}${grain(u, 400, 260)}`,
+    main: (u) => `<defs>${base(u)}</defs><rect width="400" height="260" fill="#1C252B"/><rect y="168" width="400" height="92" fill="#262019"/>${[100, 300].map((x) => `<path d="M${x} -4V40" stroke="#CFC5B5" stroke-opacity=".5"/><rect x="${x - 34}" y="40" width="68" height="34" rx="4" fill="#EAE2D3"/>${glow(u, x, 92, 70, 0.45)}`).join("")}${chairBack(70, 200, 26, 40, "#0B1012")}${chairBack(330, 200, 26, 40, "#0B1012")}${roundTable(u, 110, 214, 66, "#EEE7DB", ["#E7B44C", "#C0452E"])}${roundTable(u, 290, 220, 72, "#EEE7DB", ["#D27C55", "#6E7A55"])}${grain(u, 400, 260)}`,
+    nook: (u) => `<defs>${base(u)}${lin(`c${u}`, [[0, "#7A2636"], [0.5, "#5A1A28"], [1, "#7A2636"]], 1, 0)}</defs><rect width="400" height="260" fill="#14100E"/><rect x="0" y="0" width="90" height="260" fill="url(#c${u})"/><rect x="310" y="0" width="90" height="260" fill="url(#c${u})"/>${[16, 40, 64, 326, 350, 374].map((x) => `<path d="M${x} 0v260" stroke="#000" stroke-opacity=".25"/>`).join("")}<path d="M90 200V70a110 110 0 0 1 220 0v130z" fill="#2A1D18"/>${lamp(u, 200, 30, 36)}<rect y="200" width="400" height="60" fill="#1E1612"/><path d="M60 200h280l30 60H30z" fill="#5A3524"/>${plate(130, 214, 22, "#C0452E")}${plate(200, 216, 22, "#E7B44C")}${plate(270, 214, 22, "#6E7A55")}${candle(u, 165, 212, 0.6)}${candle(u, 235, 212, 0.6)}${grain(u, 400, 260)}`,
+    counter: (u) => `<defs>${base(u)}${lin(`p${u}`, [[0, "#F0C97E", 0.75], [1, "#F0C97E", 0.05]])}</defs><rect width="400" height="260" fill="#12140E"/><rect x="40" y="40" width="320" height="100" fill="#1D1A12"/><rect x="40" y="40" width="320" height="100" fill="url(#p${u})"/>${globe(u, 120, 60, 10)}${globe(u, 280, 60, 10)}<rect y="150" width="400" height="16" fill="#C29A63"/><rect y="166" width="400" height="94" fill="#1E1F16"/>${plate(130, 150, 22, "#7A2E3A")}${plate(270, 150, 22, "#E57A63")}${[90, 200, 310].map((x) => `<path d="M${x - 12} 214l-8 46M${x + 12} 214l8 46" stroke="#1B140C" stroke-width="3"/><ellipse cx="${x}" cy="212" rx="28" ry="7" fill="#A98257"/>`).join("")}${grain(u, 400, 260)}`,
+    booth: (u) => `<defs>${base(u)}${lin(`v${u}`, [[0, "#5E7048"], [1, "#3A4630"]])}</defs><rect width="400" height="260" fill="#14160F"/>${globe(u, 200, 70, 13)}<path d="M50 260V150a40 40 0 0 1 40-40h220a40 40 0 0 1 40 40v110z" fill="url(#v${u})"/>${[110, 160, 210, 260, 290].map((x) => `<path d="M${x} 116v80" stroke="#000" stroke-opacity=".2"/>`).join("")}<rect x="50" y="196" width="300" height="20" rx="8" fill="#4B5A3C"/>${roundTable(u, 200, 214, 70, "#2B2A1E", ["#8B2E3A", "#E7B44C"])}${candle(u, 200, 210, 0.7)}${grain(u, 400, 260)}`,
+  };
+  const ALT = { saffron: "Illustration: a vaulted brick dining room around an open fire, with a long timber table under brass lamps", mareya: "Illustration: a seafood dining room with tall windows onto the sea at sunset and linen-dressed round tables", oda: "Illustration: a tasting counter facing an open kitchen, with globe lights, ceramics on shelves and oak stools" };
+  const venueArt = (v, label = false) => { const u = "hs" + ++uid; return svg(800, 500, VENUE_ART[v](u), label ? ALT[v] : ""); };
+  const zoneArt = (z) => { const u = "hz" + ++uid; return svg(400, 260, ZONE_ART[z](u), "", "xMidYMax"); };
+  function dish([sauce, main, garnish], i = 0) {
     const r = (n) => (n * 37 + i * 11) % 23;
-    return `<svg class="hs-plate" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#fff"/><circle cx="50" cy="50" r="46" fill="none" stroke="#E7E0D3" stroke-width="2"/><circle cx="50" cy="50" r="34" fill="#FBF8F2"/>
-      <path d="M${24 + r(1) / 3} ${58 - r(2) / 4}c10-14 34-20 52-8" stroke="${sauce}" stroke-width="7" stroke-linecap="round" fill="none" opacity=".85"/>
-      <ellipse cx="${48 + r(3) / 5}" cy="${48 - r(4) / 6}" rx="${14 + r(5) / 4}" ry="${10 + r(6) / 5}" fill="${main}"/>
-      ${[0, 1, 2, 3].map((k) => `<circle cx="${34 + ((k * 13 + r(k)) % 34)}" cy="${36 + ((k * 17 + r(k + 2)) % 30)}" r="${2 + (k % 2)}" fill="${garnish}"/>`).join("")}</svg>`;
+    return `<svg class="hs-plate" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="47" fill="#000" opacity=".12"/><circle cx="50" cy="50" r="46" fill="#FBF7EF"/><circle cx="50" cy="50" r="46" fill="none" stroke="#E2D8C6" stroke-width="1.5"/><circle cx="50" cy="50" r="33" fill="#F4EEE2"/>
+      <path d="M${24 + r(1) / 3} ${58 - r(2) / 4}c10-14 34-20 52-8" stroke="${sauce}" stroke-width="6" stroke-linecap="round" fill="none" opacity=".8"/>
+      <ellipse cx="${48 + r(3) / 5}" cy="${48 - r(4) / 6}" rx="${13 + r(5) / 4}" ry="${9 + r(6) / 5}" fill="${main}"/><ellipse cx="${44 + r(3) / 5}" cy="${44 - r(4) / 6}" rx="${5 + r(5) / 8}" ry="${3}" fill="#fff" opacity=".25"/>
+      ${[0, 1, 2, 3].map((k) => `<circle cx="${34 + ((k * 13 + r(k)) % 34)}" cy="${36 + ((k * 17 + r(k + 2)) % 30)}" r="${1.6 + (k % 2)}" fill="${garnish}"/>`).join("")}</svg>`;
   }
-  const ICON = { back: '<path d="M15 5 8 12l7 7"/>', check: '<path d="m5 12.5 4.5 4.5L19 7"/>', x: '<path d="M6 6l12 12M18 6 6 18"/>', reset: '<path d="M4 4v6h6M20 20v-6h-6"/><path d="M5 15a8 8 0 0 0 14 2M19 9A8 8 0 0 0 5 7"/>', minus: '<path d="M5 12h14"/>', plus: '<path d="M12 5v14M5 12h14"/>', star: '<path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>' };
+  const ICON = { check: '<path d="m5 12.5 4.5 4.5L19 7"/>', reset: '<path d="M4 4v6h6M20 20v-6h-6"/><path d="M5 15a8 8 0 0 0 14 2M19 9A8 8 0 0 0 5 7"/>', minus: '<path d="M5 12h14"/>', plus: '<path d="M12 5v14M5 12h14"/>', star: '<path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', seat: '<path d="M7 4v9h10M7 13l-1 7M17 13l1 7M7 9h10"/>' };
   const ico = (k, s = 18) => `<svg class="hs-i" width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
 
   /* ---------- Views ---------- */
   const upcoming = () => S.bookings.filter((b) => b.status === "upcoming").sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-  function tonight(v) { const t = TIMES.reduce((a, time) => a + freeCount(S, v, DATES[0], time, 2), 0); return t; }
+  const tonight = (v) => TIMES.reduce((a, time) => a + freeCount(S, v, DATES[0], time, 2), 0);
+  const longDay = (k) => fmtDay(k, { weekday: "long", day: "numeric", month: "long" });
 
   function vDiscover() {
-    const v = VENUE[ui.venue];
+    const v = VENUE[ui.venue], qd = DATES[1];
     return `<div class="hs-discover">
-      <div class="hs-covers" role="group" aria-label="Choose a restaurant">${VENUES.map((x) => `<button type="button" class="hs-cov t-${x.tone}" data-hs-venue="${x.id}" aria-pressed="${x.id === ui.venue}">
-        ${cover(x.id)}<span class="hs-cov-t"><small>${esc(x.kind)} · ${esc(x.area)}</small><b>${esc(x.name)}</b><em>${tonight(x.id)} tables free tonight for two</em></span></button>`).join("")}</div>
-      <article class="hs-venue t-${v.tone}">
-        <div class="hs-venue-art">${cover(v.id, "big")}</div>
-        <div class="hs-venue-copy">
-          <p class="hs-k">${esc(v.kind)} · ${esc(v.area)} · ${v.price}</p>
-          <h3>${esc(v.name)}</h3>
-          <p class="hs-blurb">${esc(v.blurb)}</p>
-          <dl class="hs-facts"><div><dt>Hours</dt><dd>${esc(v.hours)}</dd></div><div><dt>Seating</dt><dd>${v.zones.map((z) => esc(z.label)).join(" · ")}</dd></div><div><dt>Parties</dt><dd>Up to ${maxParty(v.id)} guests</dd></div></dl>
-          <div class="hs-sig">${MENUS[v.id].main.slice(0, 3).map((d, i) => `<figure>${plate(d[4], i)}<figcaption>${esc(d[0])}</figcaption></figure>`).join("")}</div>
-          <div class="hs-act"><button type="button" class="hs-btn" data-hs-go="reserve">Reserve a table</button><button type="button" class="hs-btn ghost" data-hs-go="menu">See the menu</button></div>
+      <div class="hs-rail" role="group" aria-label="Choose a restaurant">
+        <p class="hs-k">Three kitchens · one booking</p>
+        ${VENUES.map((x, i) => `<button type="button" class="hs-pick t-${x.tone}" data-hs-venue="${x.id}" aria-pressed="${x.id === ui.venue}"><span class="th">${venueArt(x.id)}</span><span class="tx"><i>0${i + 1}</i><b>${esc(x.name)}</b><small>${esc(x.kind)} · ${esc(x.area)}</small><em>${tonight(x.id)} tables free tonight</em></span></button>`).join("")}
+      </div>
+      <article class="hs-feature${ui.anim ? " in" : ""}" aria-live="polite">
+        <figure class="hs-hero">${venueArt(v.id, true)}<figcaption><p class="hs-k">${esc(v.kind)} · ${esc(v.area)} · ${v.price}</p><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p></figcaption></figure>
+        <div class="hs-feature-grid">
+          <section><h4 class="hs-h">${fmtDay(qd, { weekday: "long" })}, for two</h4>
+            <div class="hs-quick" role="group" aria-label="Free times ${longDay(qd)}">${TIMES.filter((t) => openAt(v.id, t)).map((t) => { const n = freeCount(S, v.id, qd, t, 2); return `<button type="button" data-hs-quick="${t}" ${n ? "" : "disabled"} aria-label="${t}, ${n ? n + " tables free" : "full"}"><b>${t}</b><small>${n ? n + " free" : "Full"}</small></button>`; }).join("")}</div>
+            <dl class="hs-facts"><div><dt>Hours</dt><dd>${esc(v.hours)}</dd></div><div><dt>Parties</dt><dd>Up to ${maxParty(v.id)} guests</dd></div></dl></section>
+          <section><h4 class="hs-h">From the kitchen</h4><div class="hs-sig">${MENUS[v.id].main.slice(0, 3).map((d, i) => `<figure>${dish(d[4], i)}<figcaption>${esc(d[0])}<small>${esc(d[1])}</small></figcaption></figure>`).join("")}</div>
+            <button type="button" class="hs-link" data-hs-go="menu">Read the full menu ${ico("arrow", 16)}</button></section>
         </div>
+        <section class="hs-zones"><h4 class="hs-h">Where you could sit</h4><div class="hs-zone-row">${v.zones.map((z) => `<button type="button" data-hs-zonepick="${z.id}"><figure>${zoneArt(z.id)}</figure><span><b>${esc(z.label)}</b><small>${ZONES[z.id]}</small></span></button>`).join("")}</div></section>
+        <div class="hs-act"><button type="button" class="hs-btn" data-hs-go="reserve">Reserve at ${esc(v.name)}</button></div>
       </article></div>`;
   }
 
   function vReserve() {
-    const d = ui.draft, v = VENUE[d.venue];
-    const maxP = maxParty(d.venue);
+    const d = ui.draft, v = VENUE[d.venue], maxP = maxParty(d.venue);
     const slots = TIMES.map((t) => ({ t, n: freeCount(S, d.venue, d.date, t, d.party, d.editing), open: openAt(d.venue, t) }));
     const map = d.time ? plan(S, d.venue, d.date, d.time, d.party, d.editing) : null;
     const table = map && d.table ? map.find((t) => t.id === d.table) : null;
+    const zone = table ? v.zones.find((z) => z.id === table.zone) : v.zones.find((z) => z.id === d.zone) || v.zones[0];
     const dayTotal = (k) => TIMES.reduce((a, t) => a + freeCount(S, d.venue, k, t, d.party, d.editing), 0);
     const ed = d.editing && S.bookings.find((b) => b.id === d.editing);
-    return `${ed ? `<div class="hs-edit-bar" role="status"><span>Changing booking <b>${ed.id}</b> · ${esc(VENUE[ed.venue].name)}, ${fmtDay(ed.date)} at ${ed.time}</span><button type="button" class="hs-link" data-hs-stopedit>Keep the original</button></div>` : ""}
-    <div class="hs-reserve t-${v.tone}">
+    return `${ed ? `<div class="hs-edit-bar" role="status"><span>Changing <b>${ed.id}</b> · ${esc(VENUE[ed.venue].name)}, ${fmtDay(ed.date)} at ${ed.time}, table ${ed.table}</span><button type="button" class="hs-link" data-hs-stopedit>Keep the original</button></div>` : ""}
+    <div class="hs-reserve">
       <div class="hs-steps">
-        <section class="hs-step"><h4><span>1</span>Restaurant</h4>
-          <div class="hs-seg" role="group" aria-label="Restaurant">${VENUES.map((x) => `<button type="button" data-hs-dvenue="${x.id}" aria-pressed="${x.id === d.venue}">${esc(x.name)}</button>`).join("")}</div></section>
-        <section class="hs-step"><h4><span>2</span>Date</h4>
-          <div class="hs-dates" role="group" aria-label="Date">${DATES.map((k, i) => { const n = dayTotal(k); return `<button type="button" data-hs-date="${k}" aria-pressed="${k === d.date}" ${n ? "" : "disabled"}><small>${i === 0 ? "Tonight" : fmtDay(k, { weekday: "short" })}</small><b>${parseKey(k).getDate()}</b><i class="lv${n > 20 ? 3 : n > 8 ? 2 : n ? 1 : 0}" aria-hidden="true"></i><span class="sr-only">${n} tables across the evening</span></button>`; }).join("")}</div></section>
-        <section class="hs-step"><h4><span>3</span>Guests</h4>
+        <section class="hs-step"><h4><span>01</span>Restaurant</h4>
+          <div class="hs-seg" role="group" aria-label="Restaurant">${VENUES.map((x) => `<button type="button" class="t-${x.tone}" data-hs-dvenue="${x.id}" aria-pressed="${x.id === d.venue}"><span class="sw" aria-hidden="true"></span>${esc(x.name)}</button>`).join("")}</div></section>
+        <section class="hs-step"><h4><span>02</span>Evening</h4>
+          <div class="hs-dates" role="group" aria-label="Date">${DATES.map((k, i) => { const n = dayTotal(k); return `<button type="button" data-hs-date="${k}" aria-pressed="${k === d.date}" ${n ? "" : "disabled"}><small>${i === 0 ? "Tonight" : fmtDay(k, { weekday: "short" })}</small><b>${parseKey(k).getDate()}</b><i class="lv${n > 20 ? 3 : n > 8 ? 2 : n ? 1 : 0}" aria-hidden="true"><span></span><span></span><span></span></i><span class="sr-only">${n} tables across the evening</span></button>`; }).join("")}</div></section>
+        <section class="hs-step"><h4><span>03</span>Guests</h4>
           <div class="hs-party"><button type="button" data-hs-party="-1" aria-label="Fewer guests" ${d.party <= 1 ? "disabled" : ""}>${ico("minus")}</button><output aria-live="polite"><b>${d.party}</b> ${d.party === 1 ? "guest" : "guests"}</output><button type="button" data-hs-party="1" aria-label="More guests" ${d.party >= 8 ? "disabled" : ""}>${ico("plus")}</button></div>
           ${d.party > maxP ? `<p class="hs-warn">${esc(v.name)} seats parties of up to ${maxP}. ${d.venue === "oda" ? "Mareya's private nook takes eight." : ""}</p>` : ""}</section>
-        <section class="hs-step"><h4><span>4</span>Time</h4>
+        <section class="hs-step"><h4><span>04</span>Time</h4>
           <div class="hs-times" role="group" aria-label="Time">${slots.map(({ t, n, open }) => `<button type="button" data-hs-time="${t}" aria-pressed="${t === d.time}" ${n ? "" : "disabled"}><b>${t}</b><small>${!open ? "No sitting" : n === 0 ? "Full" : n === 1 ? "Last table" : `${n} tables`}</small></button>`).join("")}</div></section>
-        <section class="hs-step"><h4><span>6</span>Occasion & preferences</h4>
+        <section class="hs-step"><h4><span>06</span>Occasion & preferences</h4>
           <div class="hs-chips" role="group" aria-label="Occasion">${OCCASIONS.map((o) => `<button type="button" data-hs-occ="${o}" aria-pressed="${o === d.occasion}">${o}</button>`).join("")}</div>
           <div class="hs-prefs">${PREFS.map((p) => `<label><input type="checkbox" data-hs-pref="${p}" ${d.prefs.includes(p) ? "checked" : ""}><span>${p}</span></label>`).join("")}</div>
           <label class="hs-note"><span>Note for the team <small>(optional, stays in this demo)</small></span><textarea data-hs-note rows="2" maxlength="140" placeholder="e.g. We'd love a table by the fire">${esc(d.note)}</textarea></label></section>
       </div>
       <aside class="hs-side">
-        <section class="hs-step hs-plan-step"><h4><span>5</span>Table</h4>
+        <section class="hs-step hs-plan-step"><h4><span>05</span>Table</h4>
+          <figure class="hs-setting${ui.anim ? " in" : ""}">${zoneArt(zone.id)}<figcaption><b>${esc(zone.label)}</b><small>${ZONES[zone.id]}</small></figcaption></figure>
           ${map ? `<div class="hs-plan" role="group" aria-label="Floor plan at ${d.time}">
-            ${v.zones.map((z) => `<div class="hs-zone" style="left:${z.x}%;top:${z.y}%;width:${z.w}%;height:${z.h}%"><span>${esc(z.label)}</span></div>`).join("")}
-            ${map.map((t) => `<button type="button" class="hs-tb s-${t.status} sh-${t.shape}${t.id === d.table ? " sel" : ""}" style="left:${t.x}%;top:${t.y}%" data-hs-table="${t.id}" ${t.status === "free" ? "" : "disabled"} aria-pressed="${t.id === d.table}" aria-label="Table ${t.id}, ${t.seats} seats, ${v.zones.find((z) => z.id === t.zone).label}, ${t.status === "free" ? "free" : t.status === "yours" ? "your booking" : t.status === "size" ? "wrong size for your party" : "taken"}"><span>${t.seats}</span></button>`).join("")}
+            ${v.zones.map((z) => `<div class="hs-zone${z.id === zone.id ? " on" : ""}" style="left:${z.x}%;top:${z.y}%;width:${z.w}%;height:${z.h}%"><span>${esc(z.label)}</span></div>`).join("")}
+            ${map.map((t) => `<button type="button" class="hs-tb s-${t.status} sh-${t.shape}${t.id === d.table ? " sel" : ""}" style="left:${t.x}%;top:${t.y}%" data-hs-table="${t.id}" ${t.status === "free" ? "" : "disabled"} aria-pressed="${t.id === d.table}" aria-label="Table ${t.id}, ${t.seats} seats, ${v.zones.find((z) => z.id === t.zone).label}, ${t.status === "free" ? "free" : t.status === "yours" ? "your booking" : t.status === "size" ? "wrong size for your party" : t.status === "closed" ? "no sitting" : "taken"}"><span>${t.seats}</span></button>`).join("")}
           </div>
           <ul class="hs-legend"><li class="l-free">Free for ${d.party}</li><li class="l-taken">Taken</li><li class="l-size">Other sizes</li><li class="l-yours">Your bookings</li></ul>
           <button type="button" class="hs-link" data-hs-best ${bestTable(S, d.venue, d.date, d.time, d.party, d.editing) ? "" : "disabled"}>Choose the best table for me</button>`
-          : `<p class="hs-empty">Pick a time to see which tables are free.</p>`}
+          : `<p class="hs-empty">Pick a time and the floor plan opens with every free table.</p>`}
         </section>
         <section class="hs-summary" aria-live="polite">
-          <p class="hs-k">Your table</p>
+          <p class="hs-k">Your reservation</p>
           <h4>${esc(v.name)}</h4>
-          <dl><div><dt>When</dt><dd>${fmtDay(d.date, { weekday: "long", day: "numeric", month: "long" })}${d.time ? ` · ${d.time}` : ""}</dd></div><div><dt>Guests</dt><dd>${d.party}</dd></div><div><dt>Table</dt><dd>${table ? `${table.id} · ${v.zones.find((z) => z.id === table.zone).label}` : "Not chosen yet"}</dd></div>${d.occasion !== "None" ? `<div><dt>Occasion</dt><dd>${esc(d.occasion)}</dd></div>` : ""}${d.prefs.length ? `<div><dt>Notes</dt><dd>${d.prefs.map(esc).join(", ")}</dd></div>` : ""}</dl>
-          <button type="button" class="hs-btn" data-hs-confirm ${d.time && table ? "" : "disabled"}>${d.editing ? "Save changes" : "Confirm reservation"}</button>
+          <dl><div><dt>When</dt><dd>${longDay(d.date)}${d.time ? ` · ${d.time}` : ""}</dd></div><div><dt>Guests</dt><dd>${d.party}</dd></div><div><dt>Table</dt><dd>${table ? `${table.id} · ${esc(zone.label)}, ${table.seats} seats` : '<span class="hs-pending">Not chosen yet</span>'}</dd></div>${d.occasion !== "None" ? `<div><dt>Occasion</dt><dd>${esc(d.occasion)}</dd></div>` : ""}${d.prefs.length ? `<div><dt>Notes</dt><dd>${d.prefs.map(esc).join(", ")}</dd></div>` : ""}</dl>
+          <button type="button" class="hs-btn" data-hs-confirm ${d.time && table ? "" : "disabled"}>${d.editing ? "Save changes" : d.time && table ? "Confirm reservation" : !d.time ? "Choose a time" : "Choose a table"}</button>
           ${ui.msg ? `<p class="hs-warn">${esc(ui.msg)}</p>` : `<p class="hs-fine">Demo only. No restaurant receives this booking.</p>`}
         </section>
       </aside>
@@ -230,25 +301,28 @@
     const v = VENUE[ui.venue], m = MENUS[v.id];
     const veg = upcoming().some((b) => b.venue === v.id && b.prefs?.includes("Vegetarian"));
     const items = m[ui.course].filter((d) => !ui.vegOnly || d[3].some((t) => t === "V" || t === "VG"));
-    return `<div class="hs-menu t-${v.tone}">
-      <header class="hs-menu-head"><div><p class="hs-k">${esc(v.name)} · Menu</p><h3>${v.id === "oda" ? "Tasting menu · 9 courses · $95" : "À la carte"}</h3></div>
-        <div class="hs-seg sm" role="group" aria-label="Restaurant">${VENUES.map((x) => `<button type="button" data-hs-venue="${x.id}" aria-pressed="${x.id === v.id}">${esc(x.name)}</button>`).join("")}</div></header>
-      ${veg ? `<p class="hs-tip">${ico("check", 16)}Your booking notes say vegetarian. The kitchen has it.</p>` : ""}
-      <div class="hs-menu-bar"><div class="hs-tabs" role="tablist" aria-label="Courses">${COURSES.map(([k, l]) => `<button type="button" role="tab" id="hs-c-${k}" aria-selected="${k === ui.course}" tabindex="${k === ui.course ? 0 : -1}" data-hs-course="${k}">${l}</button>`).join("")}</div>
-        <label class="hs-toggle"><input type="checkbox" data-hs-veg ${ui.vegOnly ? "checked" : ""}><span>Vegetarian only</span></label></div>
-      <ul class="hs-dishes" role="tabpanel" aria-labelledby="hs-c-${ui.course}">${items.length ? items.map((d, i) => `<li>${plate(d[4], i)}<div><b>${esc(d[0])}</b><span>${esc(d[1])}</span><em>${d[3].map((t) => `<i class="tg">${t}</i>`).join("")}</em></div><strong>${d[2] ? "$" + d[2] : "Included"}</strong></li>`).join("") : `<li class="hs-none">No vegetarian dishes in this course. Try another course.</li>`}</ul>
-      <p class="hs-fine">V vegetarian · VG vegan · GF gluten-free · N contains nuts. Fictional menu and prices.</p>
+    return `<div class="hs-menu">
+      <div class="hs-seg sm" role="group" aria-label="Restaurant">${VENUES.map((x) => `<button type="button" class="t-${x.tone}" data-hs-venue="${x.id}" aria-pressed="${x.id === v.id}"><span class="sw" aria-hidden="true"></span>${esc(x.name)}</button>`).join("")}</div>
+      <div class="hs-card${ui.anim ? " in" : ""}">
+        <header class="hs-card-head"><p class="hs-k">${esc(v.area)} · ${esc(v.hours)}</p><h3>${esc(v.name)}</h3><p class="hs-card-sub">${v.id === "oda" ? "Tasting menu · nine courses · $95" : "À la carte · autumn"}</p></header>
+        ${veg ? `<p class="hs-tip">${ico("check", 16)}Your booking says vegetarian. The kitchen has it.</p>` : ""}
+        <div class="hs-menu-bar"><div class="hs-tabs" role="tablist" aria-label="Courses">${COURSES.map(([k, l]) => `<button type="button" role="tab" id="hs-c-${k}" aria-selected="${k === ui.course}" tabindex="${k === ui.course ? 0 : -1}" data-hs-course="${k}">${l}</button>`).join("")}</div>
+          <label class="hs-toggle"><input type="checkbox" data-hs-veg ${ui.vegOnly ? "checked" : ""}><span>Vegetarian only</span></label></div>
+        <ul class="hs-dishes" role="tabpanel" aria-labelledby="hs-c-${ui.course}">${items.length ? items.map((d, i) => `<li>${dish(d[4], i)}<div><p class="ln"><b>${esc(d[0])}</b><i aria-hidden="true"></i><strong>${d[2] ? "$" + d[2] : "Included"}</strong></p><span>${esc(d[1])}</span><em>${d[3].map((t) => `<i class="tg">${t}</i>`).join("")}</em></div></li>`).join("") : `<li class="hs-none">No vegetarian dishes in this course. Try another course.</li>`}</ul>
+        <p class="hs-fine">V vegetarian · VG vegan · GF gluten-free · N contains nuts. A fictional menu with illustrative prices.</p>
+        <button type="button" class="hs-btn" data-hs-go="reserve">Reserve at ${esc(v.name)}</button>
+      </div>
     </div>`;
   }
 
   function ticket(b, mode) {
-    const v = VENUE[b.venue], z = v.zones.find((x) => x.id === tableList(b.venue).find((t) => t.id === b.table)?.zone);
+    const v = VENUE[b.venue], z = zoneOf(b.venue, b.table);
     return `<article class="hs-ticket t-${v.tone}${mode === "past" ? " past" : ""}">
-      <div class="hs-ticket-art">${cover(b.venue)}</div>
+      <figure class="hs-ticket-art">${z ? zoneArt(z.id) : venueArt(b.venue)}</figure>
       <div class="hs-ticket-body">
         <p class="hs-k">${b.id}${b.status === "cancelled" ? " · Cancelled" : b.status === "visited" ? " · Visited" : b.changed ? " · Changed" : ""}</p>
         <h4>${esc(v.name)}</h4>
-        <p>${fmtDay(b.date, { weekday: "long", day: "numeric", month: "long" })} · ${b.time} · ${b.party} ${b.party === 1 ? "guest" : "guests"}</p>
+        <p>${longDay(b.date)} · ${b.time} · ${b.party} ${b.party === 1 ? "guest" : "guests"}</p>
         <p class="hs-sub">Table ${b.table}${z ? ` · ${esc(z.label)}` : ""}${b.occasion && b.occasion !== "None" ? ` · ${esc(b.occasion)}` : ""}${b.prefs?.length ? ` · ${b.prefs.map(esc).join(", ")}` : ""}</p>
         ${mode === "up" ? (ui.cancelAsk === b.id
           ? `<div class="hs-ask" role="group" aria-label="Confirm cancellation"><span>Cancel this booking? The table is released.</span><button type="button" class="hs-btn sm danger" data-hs-cancelyes="${b.id}">Yes, cancel</button><button type="button" class="hs-btn sm ghost" data-hs-cancelno>Keep it</button></div>`
@@ -261,7 +335,8 @@
     const up = upcoming();
     return `<div class="hs-mine">
       <section class="hs-club">
-        <p class="hs-k">The Table Club · across all three restaurants</p>
+        <svg class="hs-club-art" viewBox="0 0 300 190" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<path d="M${-20 + i * 26} 190a${150 - i * 6} ${150 - i * 6} 0 0 1 ${300 - i * 30} 0" fill="none" stroke="#E3A35B" stroke-opacity="${0.18 - i * 0.015}"/>`).join("")}</svg>
+        <p class="hs-k">The Table Club · all three restaurants</p>
         <h3>${tier.k}</h3>
         <div class="hs-stamps" role="img" aria-label="${n} visits">${Array.from({ length: 6 }, (_, i) => `<i class="${i < n ? "on" : ""}${i === 2 || i === 5 ? " mark" : ""}">${i < n ? ico("check", 14) : ""}</i>`).join("")}</div>
         <p>${n} ${n === 1 ? "visit" : "visits"}${next ? ` · ${next.min - n} more to ${next.k}` : " · top level"}</p>
@@ -277,15 +352,14 @@
   function vConfirm() {
     const c = ui.confirm; if (!c) return "";
     const b = S.bookings.find((x) => x.id === c.id); if (!b) return "";
-    const v = VENUE[b.venue], n = visits(S), perks = perksOf(n);
-    const z = v.zones.find((x) => x.id === tableList(b.venue).find((t) => t.id === b.table)?.zone);
+    const v = VENUE[b.venue], n = visits(S), perks = perksOf(n), z = zoneOf(b.venue, b.table);
     const notes = [b.occasion === "Birthday" && perks.includes(CLUB[0].perk) ? "Birthday dessert is on us (Table Club)" : "", perks.includes(CLUB[1].perk) ? "A welcome glass on arrival (Table Club Regular)" : "", ...b.prefs].filter(Boolean);
-    return `<div class="hs-confirm-bg" data-hs-closeconfirm></div><div class="hs-confirm t-${v.tone}" role="dialog" aria-modal="true" aria-labelledby="hs-conf-t">
-      <div class="hs-confirm-art">${cover(b.venue)}</div>
+    return `<div class="hs-confirm-bg" data-hs-closeconfirm></div><div class="hs-confirm" role="dialog" aria-modal="true" aria-labelledby="hs-conf-t" data-tone="${v.tone}">
+      <figure class="hs-confirm-art">${z ? zoneArt(z.id) : venueArt(b.venue)}<figcaption>${z ? esc(z.label) : ""}</figcaption></figure>
       <div class="hs-confirm-body">
-        <p class="hs-k">${c.changed ? "Booking updated" : "Reservation confirmed"} · ${b.id}</p>
+        <p class="hs-k">${ico("check", 14)} ${c.changed ? "Booking updated" : "Reservation confirmed"} · ${b.id}</p>
         <h3 id="hs-conf-t">See you at ${esc(v.name)}</h3>
-        <dl><div><dt>When</dt><dd>${fmtDay(b.date, { weekday: "long", day: "numeric", month: "long" })} at ${b.time}</dd></div><div><dt>Guests</dt><dd>${b.party}</dd></div><div><dt>Table</dt><dd>${b.table}${z ? ` · ${esc(z.label)}` : ""}</dd></div></dl>
+        <dl><div><dt>When</dt><dd>${longDay(b.date)}, ${b.time}</dd></div><div><dt>Guests</dt><dd>${b.party}</dd></div><div><dt>Table</dt><dd>${b.table}${z ? ` · ${esc(z.label)}` : ""}</dd></div></dl>
         ${notes.length ? `<ul class="hs-notes">${notes.map((x) => `<li>${ico("check", 14)}${esc(x)}</li>`).join("")}</ul>` : ""}
         <p class="hs-fine">A demo confirmation. Nothing has been sent to a restaurant.</p>
         <div class="hs-act"><button type="button" class="hs-btn" data-hs-go="mine" data-hs-closeconfirm>View my table</button><button type="button" class="hs-btn ghost" data-hs-modify="${b.id}">Modify</button></div>
@@ -295,9 +369,9 @@
   /* ---------- Shell & render ---------- */
   root.innerHTML = `<div class="hs" data-tone="ember">
     <header class="hs-bar">
-      <span class="hs-brand"><b>The Table</b><small>Three kitchens, one booking</small></span>
-      <nav class="hs-nav" aria-label="Hospitality Experience Studio">${[["discover", "Discover"], ["reserve", "Reserve"], ["menu", "Menu"], ["mine", "My table"]].map(([k, l]) => `<button type="button" data-hs-tab="${k}">${l}${k === "mine" ? '<em data-hs-count></em>' : ""}</button>`).join("")}</nav>
-      <button type="button" class="hs-reset" data-hs-reset>${ico("reset", 15)}Reset demo</button>
+      <span class="hs-brand"><b>The Table</b><small>Three kitchens · one booking</small></span>
+      <nav class="hs-nav" aria-label="The Table">${[["discover", "Discover"], ["reserve", "Reserve"], ["menu", "Menu"], ["mine", "My table"]].map(([k, l]) => `<button type="button" data-hs-tab="${k}">${l}${k === "mine" ? '<em data-hs-count></em>' : ""}</button>`).join("")}</nav>
+      <button type="button" class="hs-reset" data-hs-reset>${ico("reset", 15)}<span>Reset demo</span></button>
     </header>
     <div class="hs-view" data-hs-view tabindex="-1"></div>
     <div data-hs-layer></div>
@@ -309,14 +383,16 @@
   function render(focus) {
     const tone = VENUE[ui.view === "reserve" ? ui.draft.venue : ui.venue].tone;
     $(".hs").dataset.tone = tone;
-    root.querySelectorAll("[data-hs-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.hsTab === ui.view));
+    root.querySelectorAll("[data-hs-tab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hsTab === ui.view)));
     const n = upcoming().length; $("[data-hs-count]").textContent = n ? n : "";
     $("[data-hs-view]").innerHTML = { discover: vDiscover, reserve: vReserve, menu: vMenu, mine: vMine }[ui.view]();
+    $("[data-hs-view]").dataset.view = ui.view;
     $("[data-hs-layer]").innerHTML = vConfirm();
+    ui.anim = false;
     if (ui.confirm) $(".hs-confirm .hs-btn")?.focus({ preventScroll: true });
     else if (focus) root.querySelector(focus)?.focus({ preventScroll: true });
   }
-  const go = (view) => { ui.view = view; ui.cancelAsk = null; ui.msg = ""; render("[data-hs-view]"); const top = $(".hs").getBoundingClientRect().top; if (top < 0) scrollBy({ top: top - 80 }); };
+  const go = (view, focus = "[data-hs-view]") => { ui.view = view; ui.cancelAsk = null; ui.msg = ""; ui.anim = true; render(focus); const top = $(".hs").getBoundingClientRect().top; if (top < 0) scrollBy({ top: top - 80, behavior: reduce() ? "auto" : "smooth" }); };
   const fixDraft = () => {
     // Keep the draft valid when date, guests or restaurant change: drop a table that no longer fits.
     const d = ui.draft;
@@ -325,19 +401,23 @@
     if (d.time && freeCount(S, d.venue, d.date, d.time, d.party, d.editing) === 0) { d.time = null; d.table = null; }
     ui.msg = "";
   };
+  // Best free table, preferring the seating area the guest asked for.
+  const bestIn = (d) => { const free = plan(S, d.venue, d.date, d.time, d.party, d.editing).filter((t) => t.status === "free").sort((a, b) => a.seats - b.seats); return free.find((t) => t.zone === d.zone) || free[0] || null; };
 
   root.addEventListener("click", (e) => {
     const t = (s) => e.target.closest(s);
     let b;
-    if ((b = t("[data-hs-tab]"))) { if (b.dataset.hsTab === "reserve" && !ui.draft.editing && ui.draft.venue !== ui.venue) { ui.draft.venue = ui.venue; ui.draft.table = null; fixDraft(); } return go(b.dataset.hsTab); }
-    if ((b = t("[data-hs-go]"))) { if (b.dataset.hsGo === "reserve" && !ui.draft.editing) { ui.draft.venue = ui.venue; fixDraft(); } ui.confirm = null; return go(b.dataset.hsGo); }
-    if ((b = t("[data-hs-venue]"))) { ui.venue = b.dataset.hsVenue; return render(`[data-hs-venue="${ui.venue}"]`); }
-    if ((b = t("[data-hs-dvenue]"))) { ui.draft.venue = ui.venue = b.dataset.hsDvenue; ui.draft.table = null; fixDraft(); return render(`[data-hs-dvenue="${ui.draft.venue}"]`); }
+    if ((b = t("[data-hs-tab]"))) { if (b.dataset.hsTab === "reserve" && !ui.draft.editing && ui.draft.venue !== ui.venue) { ui.draft.venue = ui.venue; ui.draft.table = null; ui.draft.zone = null; fixDraft(); } return go(b.dataset.hsTab, `[data-hs-tab="${b.dataset.hsTab}"]`); }
+    if ((b = t("[data-hs-go]"))) { if (b.dataset.hsGo === "reserve" && !ui.draft.editing && ui.draft.venue !== ui.venue) { ui.draft.venue = ui.venue; ui.draft.table = null; ui.draft.zone = null; fixDraft(); } ui.confirm = null; return go(b.dataset.hsGo); }
+    if ((b = t("[data-hs-venue]"))) { if (ui.venue !== b.dataset.hsVenue) ui.anim = true; ui.venue = b.dataset.hsVenue; render(`[data-hs-venue="${ui.venue}"]`); say(`${VENUE[ui.venue].name}: ${VENUE[ui.venue].kind}, ${VENUE[ui.venue].area}.`); return; }
+    if ((b = t("[data-hs-quick]"))) { if (!ui.draft.editing) ui.draft = { ...freshDraft(ui.venue), time: b.dataset.hsQuick }; fixDraft(); return go("reserve"); }
+    if ((b = t("[data-hs-zonepick]"))) { if (!ui.draft.editing) { ui.draft = { ...freshDraft(ui.venue), zone: b.dataset.hsZonepick }; } return go("reserve"); }
+    if ((b = t("[data-hs-dvenue]"))) { ui.draft.venue = ui.venue = b.dataset.hsDvenue; ui.draft.table = null; ui.draft.zone = null; ui.anim = true; fixDraft(); return render(`[data-hs-dvenue="${ui.draft.venue}"]`); }
     if ((b = t("[data-hs-date]"))) { ui.draft.date = b.dataset.hsDate; fixDraft(); return render(`[data-hs-date="${ui.draft.date}"]`); }
     if ((b = t("[data-hs-party]"))) { ui.draft.party = Math.max(1, Math.min(8, ui.draft.party + +b.dataset.hsParty)); fixDraft(); return render(`[data-hs-party="${b.dataset.hsParty}"]`); }
     if ((b = t("[data-hs-time]"))) { ui.draft.time = b.dataset.hsTime; fixDraft(); return render(`[data-hs-time="${ui.draft.time}"]`); }
-    if ((b = t("[data-hs-table]"))) { ui.draft.table = b.dataset.hsTable; ui.msg = ""; return render(`[data-hs-table="${ui.draft.table}"]`); }
-    if (t("[data-hs-best]")) { const x = bestTable(S, ui.draft.venue, ui.draft.date, ui.draft.time, ui.draft.party, ui.draft.editing); if (x) ui.draft.table = x.id; return render(x ? `[data-hs-table="${x.id}"]` : null); }
+    if ((b = t("[data-hs-table]"))) { const z = zoneOf(ui.draft.venue, b.dataset.hsTable); if (z && z.id !== ui.draft.zone) ui.anim = true; ui.draft.table = b.dataset.hsTable; ui.draft.zone = z?.id; ui.msg = ""; render(`[data-hs-table="${ui.draft.table}"]`); say(`Table ${ui.draft.table}, ${z?.label}.`); return; }
+    if (t("[data-hs-best]")) { const x = bestIn(ui.draft); if (x) { ui.anim = x.zone !== ui.draft.zone; ui.draft.table = x.id; ui.draft.zone = x.zone; say(`Table ${x.id} chosen, ${zoneOf(ui.draft.venue, x.id)?.label}.`); } return render(x ? `[data-hs-table="${x.id}"]` : null); }
     if ((b = t("[data-hs-occ]"))) { ui.draft.occasion = b.dataset.hsOcc; return render(`[data-hs-occ="${ui.draft.occasion}"]`); }
     if (t("[data-hs-confirm]")) {
       const r = reserve(S, ui.draft);
@@ -349,7 +429,7 @@
     if ((b = t("[data-hs-modify]"))) {
       const bk = S.bookings.find((x) => x.id === b.dataset.hsModify && x.status === "upcoming"); if (!bk) return;
       ui.confirm = null; ui.venue = bk.venue;
-      ui.draft = { venue: bk.venue, date: bk.date, party: bk.party, time: bk.time, table: bk.table, occasion: bk.occasion || "None", prefs: [...(bk.prefs || [])], note: bk.note || "", editing: bk.id };
+      ui.draft = { venue: bk.venue, date: bk.date, party: bk.party, time: bk.time, table: bk.table, zone: zoneOf(bk.venue, bk.table)?.id, occasion: bk.occasion || "None", prefs: [...(bk.prefs || [])], note: bk.note || "", editing: bk.id };
       return go("reserve");
     }
     if (t("[data-hs-stopedit]")) { ui.draft = freshDraft(ui.draft.venue); return go("mine"); }
@@ -359,7 +439,7 @@
     if ((b = t("[data-hs-visit]"))) { const before = tierOf(visits(S)).k; visit(S, b.dataset.hsVisit); save(); const after = tierOf(visits(S)).k; say(after !== before ? `Visit recorded. Welcome to ${after} in The Table Club.` : "Visit recorded in The Table Club."); return render("[data-hs-view]"); }
     if ((b = t("[data-hs-course]"))) { ui.course = b.dataset.hsCourse; return render(`#hs-c-${ui.course}`); }
     if (t("[data-hs-closeconfirm]")) { ui.confirm = null; return render(t("[data-hs-go]") ? "[data-hs-view]" : null); }
-    if (t("[data-hs-reset]")) { S = seed(); save(); Object.assign(ui, { view: "discover", venue: "saffron", course: "start", vegOnly: false, draft: freshDraft(), confirm: null, cancelAsk: null, msg: "" }); say("Demo reset."); return render("[data-hs-view]"); }
+    if (t("[data-hs-reset]")) { S = seed(); save(); Object.assign(ui, { view: "discover", venue: "saffron", course: "start", vegOnly: false, draft: freshDraft(), confirm: null, cancelAsk: null, msg: "", anim: true }); say("Demo reset."); return render("[data-hs-reset]"); }
   });
   root.addEventListener("change", (e) => {
     const el = e.target;

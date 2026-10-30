@@ -467,3 +467,6 @@ html.ee-lock { overflow: hidden; }
 .edu-note { margin: 18px 0 0; font-size: 13px; color: var(--fg-2); }
 .edu-nojs { padding: 32px; border-radius: 20px; background: var(--white); border: 1px solid var(--line); }
 @media (max-width: 900px) { .edu-intro { grid-template-columns: 1fr; } .edu-facts { grid-template-columns: 1fr; gap: 12px; } }
+
+/* Showcase band in EnrollEase's own sky-blue, matching how the other industry demos are staged */
+.edu-show { background: linear-gradient(170deg, #F4F9FF 0%, #DDEEFC 58%, #C5E3F8 100%); }

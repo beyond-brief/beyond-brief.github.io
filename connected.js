@@ -29,9 +29,9 @@
   ];
   const DEST = Object.fromEntries(DESTS.map((d) => [d.k, d]));
   const ZONES = {
-    1: { label: "Zone 1 · nearby", payg: 600, pkgs: [{ k: "day", name: "Day pass", d: "Your home allowance, abroad", perDay: 300 }, { k: "w5", name: "7 days · 5 GB", d: "Data and 100 minutes", price: 1200 }] },
-    2: { label: "Zone 2 · Europe", payg: 900, pkgs: [{ k: "w3", name: "7 days · 3 GB", d: "Data and 100 minutes", price: 1500 }, { k: "m10", name: "30 days · 10 GB", d: "Data and 300 minutes", price: 3500 }] },
-    3: { label: "Zone 3 · worldwide", payg: 1500, pkgs: [{ k: "w2", name: "7 days · 2 GB", d: "Data and 60 minutes", price: 2200 }, { k: "m8", name: "30 days · 8 GB", d: "Data and 200 minutes", price: 5500 }] },
+    1: { label: "Zone 1 · nearby", payg: 600, pkgs: [{ k: "day", name: "Day pass", d: "Your home allowance, abroad", perDay: 300 }, { k: "w5", name: "7 days · 5 GB", d: "Data and 100 minutes", price: 1200, gb: 5 }] },
+    2: { label: "Zone 2 · Europe", payg: 900, pkgs: [{ k: "w3", name: "7 days · 3 GB", d: "Data and 100 minutes", price: 1500, gb: 3 }, { k: "m10", name: "30 days · 10 GB", d: "Data and 300 minutes", price: 3500, gb: 10 }] },
+    3: { label: "Zone 3 · worldwide", payg: 1500, pkgs: [{ k: "w2", name: "7 days · 2 GB", d: "Data and 60 minutes", price: 2200, gb: 2 }, { k: "m8", name: "30 days · 8 GB", d: "Data and 200 minutes", price: 5500, gb: 8 }] },
   };
   const ACTS = [
     { k: "video", label: "Stream video, 1 hour", gb: 1.5, icon: "play" },
@@ -123,9 +123,14 @@
     plane: '<path d="M3 13.5 21 6l-4.5 13-4-5.5-6 3 1.5-4.5z"/>', bill: '<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>', help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>',
     play: '<path d="M7 4v16l13-8z"/>', cam: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-3v10l-6-3"/>', note: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', phone: '<path d="M5 3h4l2 5-3 2a12 12 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A18 18 0 0 1 3 5a2 2 0 0 1 2-2z"/>', msg: '<path d="M4 4h16v12H8l-4 4z"/>',
-    bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>', reset: '<path d="M4 4v6h6M20 20v-6h-6"/><path d="M5 15a8 8 0 0 0 14 2M19 9A8 8 0 0 0 5 7"/>', check: '<path d="m4 12.5 5 4.5L20 6"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', sig: '<path d="M4 20v-3M9 20v-7M14 20V9M19 20V4"/>',
+    bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>', reset: '<path d="M4 4v6h6M20 20v-6h-6"/><path d="M5 15a8 8 0 0 0 14 2M19 9A8 8 0 0 0 5 7"/>', check: '<path d="m4 12.5 5 4.5L20 6"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    link: '<circle cx="8.5" cy="12" r="5.5"/><circle cx="15.5" cy="12" r="5.5"/>',
   };
   const ico = (k, s = 18) => `<svg class="tc-i" width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+  const mq = typeof matchMedia === "function" ? matchMedia("(max-width: 640px)") : null;
+  const narrow = () => !!(mq && mq.matches);
+  const pc = (v) => Math.max(0, Math.min(100, v)).toFixed(2) + "%";
+  const niceStep = (span, n) => [0.5, 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500].find((s) => span / s <= n) || 1000;
 
   /* ---------- Derived views ---------- */
   function notifications() {
@@ -141,39 +146,66 @@
     p.log.slice(-2).reverse().forEach((l) => out.push(["ok", l.t, l.d]));
     return out;
   }
-  function ring(label, val, max, proj, color, unit, fair) {
-    const R = 46, C = 2 * Math.PI * R, unl = max === INF, cap = unl ? fair || 0 : max;
-    const f = cap ? Math.min(val / cap, 1) : 0, over = !unl && val > max ? Math.min((val - max) / max, 1) : 0, pf = cap ? Math.min(proj / cap, 1.25) : 0;
-    const ang = (pf * 360 - 90) * Math.PI / 180, tx = 60 + Math.cos(ang) * 46, ty = 60 + Math.sin(ang) * 46;
+
+  // A flowing allowance band: used, projected run to day 30, the allowance notch and any overspill.
+  function meter(k, label, val, max, proj, unit, fair) {
+    const unl = max === INF, cap = unl ? fair || 0 : max;
+    const fmt = (v) => (unit === "GB" ? gbf(r2(Math.max(0, v))) : Math.round(Math.max(0, v)) + " " + unit);
     const shown = unit === "GB" ? gbf(val).replace(" GB", "") : Math.round(val);
-    const left = unl ? "Unlimited" : val > max ? `${unit === "GB" ? gbf(r2(val - max)) : Math.round(val - max) + " " + unit} over` : `${unit === "GB" ? gbf(r2(max - val)) : Math.round(max - val) + " " + unit} left`;
-    return `<figure class="tc-ring" style="--c:${color}">
-      <svg viewBox="0 0 120 120" role="img" aria-label="${label}: ${shown} ${unit} used${unl ? ", unlimited" : ` of ${max} ${unit}`}">
-        <circle cx="60" cy="60" r="${R}" class="tc-ring-bg"/>
-        <circle cx="60" cy="60" r="${R}" class="tc-ring-fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - f)}"/>
-        ${over ? `<circle cx="60" cy="60" r="${R - 9}" class="tc-ring-over" style="stroke-dasharray:${2 * Math.PI * (R - 9)};stroke-dashoffset:${2 * Math.PI * (R - 9) * (1 - over)}"/>` : ""}
-        ${cap && pf > 0 ? `<circle cx="${tx}" cy="${ty}" r="4.5" class="tc-ring-proj"/>` : ""}
-      </svg>
-      <figcaption><span class="tc-k">${label}</span><b>${shown}<small>${unit === "GB" ? " GB" : " " + unit}</small></b><em>${unl ? (fair ? `of ${fair} GB fair use` : "Unlimited") : `of ${max} ${unit}`}</em><span class="tc-left${!unl && val > max ? " over" : ""}">${left}</span></figcaption>
-    </figure>`;
+    const over = !unl && val > max;
+    const head = `<div class="tc-meter-head"><span class="tc-k">${label}</span><b>${shown}<small> ${unit}</small></b>
+      <span class="tc-of">${unl ? (fair ? `of ${fair} GB fair use` : "Unlimited") : `of ${max} ${unit}`}</span>
+      <span class="tc-left${over ? " over" : ""}">${unl ? (fair ? `${fmt(fair - val)} to fair use` : "Nothing to watch") : over ? `${fmt(val - max)} over` : `${fmt(max - val)} left`}</span></div>`;
+    if (!cap) return `<div class="tc-meter m-${k} unl" role="img" aria-label="${label}: ${shown} ${unit} used, unlimited">${head}<div class="tc-band"><i class="tc-band-flow"></i></div></div>`;
+    const scale = Math.max(cap, proj, val) * 1.04, X = (v) => (v / scale) * 100, end = Math.max(val, proj);
+    return `<div class="tc-meter m-${k}" role="img" aria-label="${label}: ${shown} ${unit} used of ${cap} ${unit}${unl ? " fair use" : ""}. At this pace about ${fmt(proj)} by day ${CYCLE}${!unl && proj > max ? `, ${fmt(proj - max)} over the allowance` : ""}.">${head}
+      <div class="tc-band" style="--step:${X(niceStep(scale, 24)).toFixed(3)}%">
+        ${end > cap ? `<i class="tc-band-risk" data-tw="${k}-risk" style="left:${pc(X(cap))};width:${pc(X(end - cap))}"></i>` : ""}
+        <i class="tc-band-proj" data-tw="${k}-proj" style="left:${pc(X(val))};width:${pc(X(Math.max(0, proj - val)))}"></i>
+        <i class="tc-band-used" data-tw="${k}-used" style="width:${pc(X(Math.min(val, cap)))}"></i>
+        ${val > cap ? `<i class="tc-band-over" data-tw="${k}-over" style="left:${pc(X(cap))};width:${pc(X(val - cap))}"></i>` : ""}
+        <i class="tc-band-cap${X(cap) < 34 ? " lo" : ""}" style="left:${pc(X(cap))}"><em>${unl ? "Fair use " : "Allowance "}${cap} ${unit === "GB" ? "GB" : unit}</em></i>
+        <i class="tc-band-pin${X(proj) > 60 ? " flip" : ""}" data-tw="${k}-pin" style="left:${pc(X(proj))}"><em>Day ${CYCLE} ≈ ${fmt(proj)}</em></i>
+      </div></div>`;
   }
+  const dayTicks = (d) => `<span class="tc-days" aria-hidden="true">${Array.from({ length: CYCLE }, (_, i) => `<i class="${i < d - 1 ? "past" : i === d - 1 ? "now" : ""}"></i>`).join("")}</span>`;
+
+  // Usage over the month: cumulative area against the allowance, daily columns underneath.
   function chart() {
-    const p = P(), cfg = cfgOf(p), al = allowance(cfg), u = used(p), pr = project(p);
+    const p = P(), cfg = cfgOf(p), al = allowance(cfg), u = used(p), pr = project(p), nw = narrow();
     const cum = []; p.daily.reduce((a, v, i) => (cum[i] = r2(a + v)), 0);
-    const ymax = Math.max(al.data === INF ? 0 : al.data * 1.15, pr.data * 1.1, 2), W = 600, H = 200, x = (d) => 20 + ((d - 1) / (CYCLE - 1)) * (W - 40), y = (v) => H - 10 - (v / ymax) * (H - 30);
-    const actual = cum.map((v, i) => `${x(i + 1)},${y(v)}`).join(" ");
-    const proj = `${x(p.day)},${y(u.data)} ${x(CYCLE)},${y(pr.data)}`;
-    const dmax = Math.max(...p.daily, 0.5);
-    const bars = p.daily.map((v, i) => `<rect x="${x(i + 1) - 6}" y="${264 - (v / dmax) * 46}" width="12" height="${Math.max(1.5, (v / dmax) * 46)}" rx="2" class="${i === p.day - 1 ? "today" : ""}"/>`).join("");
-    const aly = al.data !== INF ? y(al.data) : null;
-    return `<svg class="tc-chart" viewBox="0 0 ${W} 290" role="img" aria-label="Data used so far ${gbf(u.data)} by day ${p.day}; projected ${gbf(pr.data)} by day ${CYCLE}${aly != null ? `; allowance ${al.data} GB` : ""}.">
-      ${[0.25, 0.5, 0.75, 1].map((t) => `<line x1="20" x2="${W - 20}" y1="${y(ymax * t)}" y2="${y(ymax * t)}" class="tc-grid"/><text x="${W - 18}" y="${y(ymax * t) - 4}" class="tc-ax" text-anchor="end">${gbf(r2(ymax * t))}</text>`).join("")}
-      ${aly != null ? `<rect x="20" y="10" width="${W - 40}" height="${Math.max(0, aly - 10)}" class="tc-overzone"/><line x1="20" x2="${W - 20}" y1="${aly}" y2="${aly}" class="tc-allow"/><text x="24" y="${aly - 6}" class="tc-ax strong">Allowance ${al.data} GB</text>` : ""}
-      <polyline points="${proj}" class="tc-proj"/><polyline points="${actual}" class="tc-line"/>
-      <circle cx="${x(p.day)}" cy="${y(u.data)}" r="5.5" class="tc-dot"/>
-      <text x="${Math.min(x(p.day) + 10, W - 140)}" y="${y(u.data) + 18}" class="tc-ax strong">${gbf(u.data)} · day ${p.day}</text>
-      <text x="${W - 20}" y="${y(pr.data) - 8}" class="tc-ax" text-anchor="end">Projected ${gbf(pr.data)}</text>
-      <g class="tc-bars">${bars}</g><text x="20" y="284" class="tc-ax">Day 1</text><text x="${W - 20}" y="284" class="tc-ax" text-anchor="end">Day ${CYCLE}</text>
+    const W = nw ? 340 : 680, top = 34, base = nw ? 176 : 196, bb = base + 74, H = bb + 24;
+    const ymax = Math.max(al.data === INF ? 0 : al.data * 1.15, pr.data * 1.08, 2);
+    const x = (d) => 14 + ((d - 0.5) / CYCLE) * (W - 28), y = (v) => base - (v / ymax) * (base - top);
+    const f = (n) => n.toFixed(1);
+    const pts = cum.map((v, i) => `${f(x(i + 1))},${f(y(v))}`);
+    const area = `M${f(x(1))},${base} L${pts.join(" L")} L${f(x(p.day))},${base} Z`;
+    const st = niceStep(ymax, nw ? 3 : 4), grid = []; for (let v = st; v < ymax; v += st) grid.push(v);
+    const aly = al.data !== INF ? y(al.data) : null, dx = x(p.day), dy = y(u.data), px = x(CYCLE), py = y(pr.data);
+    const dmax = Math.max(...p.daily, 0.5), bw = Math.max(3, ((W - 28) / CYCLE) * 0.58);
+    const bars = Array.from({ length: CYCLE }, (_, i) => {
+      const v = p.daily[i];
+      if (v == null || i >= p.day) return `<circle cx="${f(x(i + 1))}" cy="${bb - 2}" r="1.6" class="tc-fut"/>`;
+      const h = Math.max(2, (v / dmax) * 52);
+      return `<rect x="${f(x(i + 1) - bw / 2)}" y="${f(bb - h)}" width="${f(bw)}" height="${f(h)}" rx="${Math.min(3, bw / 2)}" class="${i === p.day - 1 ? "today" : ""}"/>`;
+    }).join("");
+    const left = p.day > CYCLE * 0.62;
+    return `<svg class="tc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Data used so far ${gbf(u.data)} by day ${p.day}; projected ${gbf(pr.data)} by day ${CYCLE}${aly != null ? `; allowance ${al.data} GB` : ""}.">
+      <defs><linearGradient id="tcArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#C5F04A" stop-opacity=".42"/><stop offset="1" stop-color="#C5F04A" stop-opacity="0"/></linearGradient></defs>
+      ${grid.map((v) => `<line x1="14" x2="${W - 14}" y1="${f(y(v))}" y2="${f(y(v))}" class="tc-grid"/>${Math.abs(y(v) - 5 - (py - 10)) < 16 || (aly != null && Math.abs(y(v) - aly) < 14) || (Math.abs(y(v) - 5 - (dy + 18)) < 14 && dx > W - 200) ? "" : `<text x="${W - 14}" y="${f(y(v) - 5)}" class="tc-ax" text-anchor="end">${gbf(r2(v))}</text>`}`).join("")}
+      <line x1="14" x2="${W - 14}" y1="${base}" y2="${base}" class="tc-baseline"/>
+      ${aly != null ? `<rect x="14" y="${top - 18}" width="${W - 28}" height="${f(Math.max(0, aly - top + 18))}" class="tc-overzone"/><line x1="14" x2="${W - 14}" y1="${f(aly)}" y2="${f(aly)}" class="tc-allow"/><text x="18" y="${f(aly - 7)}" class="tc-ax allow">Allowance ${al.data} GB</text>` : ""}
+      <path d="${area}" fill="url(#tcArea)"/>
+      <line x1="${f(dx)}" x2="${f(px)}" y1="${f(dy)}" y2="${f(py)}" class="tc-proj"/>
+      <circle cx="${f(px)}" cy="${f(py)}" r="4.5" class="tc-proj-end"/>
+      <text x="${f(px - 8)}" y="${f(py - 10)}" class="tc-ax strong" text-anchor="end">≈ ${gbf(pr.data)} by day ${CYCLE}</text>
+      <polyline points="${pts.join(" ")}" class="tc-line"/>
+      <line x1="${f(dx)}" x2="${f(dx)}" y1="${f(dy + 8)}" y2="${bb}" class="tc-today"/>
+      <circle cx="${f(dx)}" cy="${f(dy)}" r="6" class="tc-dot"/>
+      <text x="${f(left ? dx - 12 : dx + 12)}" y="${f(left ? Math.max(top - 4, dy - 12) : dy + 18)}" class="tc-ax strong" text-anchor="${left ? "end" : "start"}">${gbf(u.data)} · day ${p.day}</text>
+      <g class="tc-bars">${bars}</g>
+      <text x="14" y="${H - 4}" class="tc-ax">Day 1</text><text x="${W - 14}" y="${H - 4}" class="tc-ax" text-anchor="end">Day ${CYCLE}</text>
+      ${dx > 60 && dx < W - 60 ? `<text x="${f(dx)}" y="${H - 4}" class="tc-ax strong" text-anchor="middle">Today</text>` : ""}
     </svg>`;
   }
 
@@ -181,95 +213,163 @@
   function overview() {
     const p = P(), b = B(), cfg = cfgOf(p), al = allowance(cfg), u = used(p), pr = project(p), pl = PLAN[p.plan], n = notifications();
     return `<div class="tc-head"><div><span class="tc-k">${pl.name} · day ${p.day} of ${CYCLE}</span><h3>Your usage this month</h3></div><button type="button" class="tc-ghost" data-tc-tab="usage">Simulate usage ${ico("arrow", 16)}</button></div>
-      <div class="tc-rings">${ring("Data", u.data, al.data, pr.data, "var(--tc-data)", "GB", pl.fair)}${ring("Minutes", u.min, al.min, pr.min, "var(--tc-min)", "min")}${ring("Texts", u.sms, al.sms, pr.sms, "var(--tc-sms)", "texts")}</div>
-      <p class="tc-legend"><i class="dot"></i>Projected by day ${CYCLE} at your current pace</p>
+      <section class="tc-pulse" aria-label="Allowances this month">
+        <div class="tc-pulse-top"><span class="tc-k">Billing month</span>${dayTicks(p.day)}<b>${CYCLE - p.day} days to go</b></div>
+        ${meter("data", "Data", u.data, al.data, pr.data, "GB", pl.fair)}${meter("min", "Minutes", u.min, al.min, pr.min, "min")}${meter("sms", "Texts", u.sms, al.sms, pr.sms, "texts")}
+        <p class="tc-key"><i class="k-used"></i>Used so far <i class="k-proj"></i>Projected by day ${CYCLE} <i class="k-risk"></i>Over the allowance</p>
+      </section>
       <section class="tc-card"><header><h4>${ico("bell", 16)}Notifications</h4><span class="tc-count">${n.length}</span></header>
         ${n.length ? `<ul class="tc-notes">${n.map(([t, h, d]) => `<li class="n-${t}"><b>${esc(h)}</b><span>${esc(d)}</span></li>`).join("")}</ul>` : `<p class="tc-empty">Nothing needs your attention.</p>`}
         ${recommend(p) ? `<button type="button" class="tc-btn sm" data-tc-tab="plans">Compare plans</button>` : ""}${b.trip && !p.roaming ? `<button type="button" class="tc-btn sm ghost" data-tc-tab="roaming">Add roaming</button>` : ""}</section>`;
   }
   function usage() {
-    const p = P(), music = p.addons.includes("music"), today = p.daily[p.day - 1] || 0;
+    const p = P(), cfg = cfgOf(p), al = allowance(cfg), u = used(p), pr = project(p), music = p.addons.includes("music"), today = p.daily[p.day - 1] || 0;
+    const over = al.data !== INF && pr.data > al.data;
     return `<div class="tc-head"><div><span class="tc-k">Data used so far vs your allowance</span><h3>Usage</h3></div>
-        <div class="tc-daybox"><span>Day <b>${p.day}</b> of ${CYCLE}</span><button type="button" class="tc-ghost" data-tc-day ${p.day >= CYCLE ? "disabled" : ""}>Next day</button></div></div>
-      <div class="tc-card tc-chart-card">${chart()}<p class="tc-legend"><i class="ln"></i>Used <i class="ln dash"></i>Projected <i class="sq"></i>Daily use <i class="ov"></i>Over allowance</p></div>
-      <section class="tc-card"><header><h4>Simulate today</h4><span class="tc-sub">${gbf(today)} used today · limit ${DAY_CAP} GB a day in this demo</span></header>
-        <div class="tc-acts">${ACTS.map((a) => { const g = a.gb ? (a.k === "music" && music ? 0 : a.gb) : 0; const blocked = a.gb && today + g > DAY_CAP; return `<button type="button" data-tc-use="${a.k}" ${blocked ? "disabled" : ""}>${ico(a.icon, 18)}<span><b>${a.label}</b><small>${a.gb ? (g ? "+" + gbf(g) : "No data with your Music pass") : a.min ? "+" + a.min + " minutes" : "+" + a.sms + " texts"}</small></span></button>`; }).join("")}</div>
+        <div class="tc-daybox"><span>Day <b>${p.day}</b> of ${CYCLE}</span><button type="button" class="tc-ghost" data-tc-day ${p.day >= CYCLE ? "disabled" : ""}>Next day ${ico("arrow", 15)}</button></div></div>
+      <section class="tc-chart-card" aria-label="Data over the month">
+        <dl class="tc-stats"><div><dt>Used</dt><dd>${gbf(u.data)}</dd></div><div><dt>Projected</dt><dd class="${over ? "warn" : ""}">${gbf(pr.data)}</dd></div><div><dt>Allowance</dt><dd>${al.data === INF ? "Unlimited" : al.data + " GB"}</dd></div></dl>
+        ${chart()}
+        <p class="tc-key"><i class="k-line"></i>Used <i class="k-dash"></i>Projected <i class="k-bar"></i>Daily use <i class="k-risk"></i>Over allowance</p></section>
+      <section class="tc-card"><header><h4>Simulate today</h4><span class="tc-sub">${gbf(today)} of ${DAY_CAP} GB today · demo daily limit</span></header>
+        <div class="tc-todaybar" aria-hidden="true"><i data-tw="today" style="width:${pc((today / DAY_CAP) * 100)}"></i></div>
+        <div class="tc-acts">${ACTS.map((a) => { const g = a.gb ? (a.k === "music" && music ? 0 : a.gb) : 0; const blocked = a.gb && today + g > DAY_CAP;
+          const w = a.gb ? (g / 1.5) * 100 : a.min ? 40 : 22;
+          return `<button type="button" class="${a.gb ? "a-data" : a.min ? "a-min" : "a-sms"}" data-tc-use="${a.k}" ${blocked ? "disabled" : ""}>${ico(a.icon, 18)}<span><b>${a.label}</b><small>${a.gb ? (g ? "+" + gbf(g) : "No data with your Music pass") : a.min ? "+" + a.min + " minutes" : "+" + a.sms + " texts"}</small><i class="tc-cost" style="width:${pc(Math.max(w, 4))}"></i></span></button>`; }).join("")}</div>
         <p class="tc-msg" aria-live="polite">${esc(ui.msg)}</p></section>`;
   }
   function plans() {
-    const p = P(), w = working(), pr = project(p), rec = recommend(p);
-    const cur = bill(cfgOf(p), pr).total;
-    return `<div class="tc-head"><div><span class="tc-k">Projected for this month at your current pace</span><h3>Plans and add-ons</h3></div></div>
-      <div class="tc-plans" role="radiogroup" aria-label="Plans">${PLANS.map((pl) => { const t = bill({ ...w, plan: pl.k }, pr).total, d = t - cur, sel = w.plan === pl.k;
-        return `<button type="button" role="radio" aria-checked="${sel}" class="tc-plan${sel ? " sel" : ""}${p.plan === pl.k ? " cur" : ""}" data-tc-plan="${pl.k}">
-          <span class="tc-plan-top"><b>${pl.name}</b>${p.plan === pl.k ? '<em>Current</em>' : rec?.k === pl.k ? '<em class="rec">Best fit</em>' : ""}</span>
-          <span class="tc-price">${$$(pl.price)}<small>/month</small></span>
-          <ul><li>${lim(pl.data, "GB")}${pl.fair ? ` · ${pl.fair} GB fair use` : ""}</li><li>${lim(pl.min, "minutes")}</li><li>${lim(pl.sms, "texts")}</li></ul>
-          <span class="tc-proj-bill"><small>Projected bill</small><b>${$$(t)}</b><i class="${d < 0 ? "down" : d > 0 ? "up" : ""}">${d ? sd(d) : "No change"}</i></span></button>`; }).join("")}</div>
+    const p = P(), w = working(), pr = project(p), rec = recommend(p), cur = bill(cfgOf(p), pr).total, now = PLAN[p.plan];
+    const scale = Math.max(44, pr.data * 1.18), youX = Math.min(100, (pr.data / scale) * 100);
+    const chg = (a, b, u) => (a === b ? "" : `<em class="tc-chg ${a > b ? "good" : "bad"}">${a === INF ? "Upgrade" : b === INF ? "Capped" : (a > b ? "+" : "−") + Math.abs(a - b) + " " + u}</em>`);
+    const cards = PLANS.map((pl) => {
+      const t = bill({ ...w, plan: pl.k }, pr).total, d = t - cur, sel = w.plan === pl.k, isNow = p.plan === pl.k, al = allowance({ ...w, plan: pl.k });
+      const fits = al.data === INF || pr.data <= al.data;
+      const fill = al.data === INF ? 100 : Math.min(100, (al.data / scale) * 100);
+      return `<button type="button" role="radio" aria-checked="${sel}" class="tc-plan${sel ? " sel" : ""}${isNow ? " cur" : ""}" data-tc-plan="${pl.k}">
+        <span class="tc-plan-top"><b>${pl.name}</b>${isNow ? "<em>Current</em>" : rec?.k === pl.k ? '<em class="rec">Best fit</em>' : ""}</span>
+        <span class="tc-price">${$$(pl.price)}<small>/month</small></span>
+        <span class="tc-fit${al.data === INF ? " inf" : ""}${fits ? "" : " short"}" aria-hidden="true"><i class="tc-fit-fill" style="width:${pc(fill)}"></i><i class="tc-fit-you" style="left:${pc(youX)}"></i></span>
+        <span class="tc-verdict ${fits ? "ok" : "short"}">${al.data === INF ? `Unlimited · ${pl.fair} GB fair use` : fits ? `Fits · ${gbf(r2(al.data - pr.data))} spare` : `${gbf(r2(pr.data - al.data))} short · extra charges`}</span>
+        <ul><li><span>Data</span><b>${lim(pl.data, "GB")}</b>${isNow ? "" : chg(pl.data, now.data, "GB")}</li><li><span>Minutes</span><b>${lim(pl.min)}</b>${isNow ? "" : chg(pl.min, now.min, "min")}</li><li><span>Texts</span><b>${lim(pl.sms)}</b>${isNow ? "" : chg(pl.sms, now.sms, "texts")}</li></ul>
+        <span class="tc-proj-bill"><small>Projected bill</small><b>${$$(t)}</b><i class="${d < 0 ? "down" : d > 0 ? "up" : ""}">${d ? sd(d) : "No change"}</i></span></button>`;
+    }).join("");
+    let cmp;
+    if (w.plan !== p.plan) {
+      const np = PLAN[w.plan], a = bill(cfgOf(p), pr).total, b2 = bill({ ...w }, pr).total;
+      const row = (l, x, y, chip) => `<tr class="${x === y ? "" : "diff"}"><th scope="row">${l}</th><td>${x}</td><td>${y}${x === y ? "" : " " + chip}</td></tr>`;
+      const money = (n) => `<em class="tc-chg ${n < 0 ? "good" : "bad"}">${sd(n)}</em>`;
+      cmp = `<section class="tc-card tc-cmp"><header><h4>What changes</h4><span class="tc-sub">${now.name} → ${np.name}</span></header>
+        <div class="tc-tablewrap"><table><thead><tr><th scope="col"><span class="tc-sr">Item</span></th><th scope="col">Now · ${now.name}</th><th scope="col">With ${np.name}</th></tr></thead><tbody>
+        ${row("Data", lim(now.data, "GB"), lim(np.data, "GB"), chg(np.data, now.data, "GB"))}${row("Minutes", lim(now.min), lim(np.min), chg(np.min, now.min, "min"))}${row("Texts", lim(now.sms), lim(np.sms), chg(np.sms, now.sms, "texts"))}
+        ${row("Monthly price", $$(now.price), $$(np.price), money(np.price - now.price))}${row("Projected bill", $$(a), $$(b2), money(b2 - a))}</tbody></table></div></section>`;
+    } else cmp = `<p class="tc-hint">${ico("arrow", 15)}Pick another plan to see what changes, side by side, before anything is confirmed.</p>`;
+    return `<div class="tc-head"><div><span class="tc-k">Projected for this month at your current pace</span><h3>Plans and add-ons</h3></div>
+        <p class="tc-you"><i></i>Your projected data: <b>${gbf(pr.data)}</b></p></div>
+      <div class="tc-plans" role="radiogroup" aria-label="Plans">${cards}</div>
+      ${cmp}
       <section class="tc-card"><header><h4>Add-ons</h4><span class="tc-sub">Monthly unless stated</span></header>
         <ul class="tc-addons">${ADDONS.map((a) => `<li><label><input type="checkbox" data-tc-addon="${a.k}" ${w.addons.includes(a.k) ? "checked" : ""}><span><b>${a.name}</b><small>${a.d}</small></span><em>${$$(a.price)}</em></label></li>`).join("")}</ul></section>`;
   }
+
+  // Roaming as zone rings around home: the further the ring, the higher the pay-as-you-go rate.
+  const ZR = { 1: 18, 2: 31, 3: 44 };
+  const PIN = { tr: [33.1, 56.2], ge: [66.3, 42.4], pt: [24.6, 32.2], fr: [65.5, 23.2], ae: [83.7, 78.3], us: [16.3, 78.3] };
   function roaming() {
-    const p = P(), b = B(), w = working(), dk = ui.dest || w.roaming?.dest || b.trip?.dest || "tr", z = ZONES[DEST[dk].zone];
+    const p = P(), b = B(), w = working(), dk = ui.dest || w.roaming?.dest || b.trip?.dest || "tr", zn = DEST[dk].zone, z = ZONES[zn];
+    const [tx, ty] = PIN[dk], mx = (50 + tx) / 2 + (ty - 50) * 0.35, my = (50 + ty) / 2 - (tx - 50) * 0.35;
+    const maxPayg = Math.max(...Object.values(ZONES).map((x) => x.payg));
+    const map = `<div class="tc-map"><div class="tc-map-sq">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          ${[3, 2, 1].map((k) => `<circle cx="50" cy="50" r="${ZR[k]}" class="tc-zr z${k}${k === zn ? " on" : ""}"/>`).join("")}
+          <path d="M50,50 Q${mx.toFixed(1)},${my.toFixed(1)} ${tx},${ty}" class="tc-arc" pathLength="1"/>
+          <circle cx="50" cy="50" r="1.9" class="tc-home-dot"/><circle cx="50" cy="50" r="4.2" class="tc-home-halo"/>
+        </svg>
+        <span class="tc-home">Home</span>
+        ${[1, 2, 3].map((k) => `<span class="tc-zl z${k}" style="top:${50 + ZR[k]}%">Zone ${k}</span>`).join("")}
+        ${DESTS.map((d) => `<button type="button" class="tc-pin z${d.zone}" style="left:${PIN[d.k][0]}%;top:${PIN[d.k][1]}%" data-tc-dest="${d.k}" aria-pressed="${d.k === dk}" aria-label="${d.name}, zone ${d.zone}${b.trip?.dest === d.k ? ", upcoming trip" : ""}"><i></i>${d.name}${b.trip?.dest === d.k ? "<small>Trip</small>" : ""}</button>`).join("")}
+      </div></div>`;
+    const rates = `<ul class="tc-rates">${[1, 2, 3].map((k) => `<li class="z${k}${k === zn ? " on" : ""}"><span>${ZONES[k].label}</span><i style="width:${pc((ZONES[k].payg / maxPayg) * 100)}"></i><b>${$$(ZONES[k].payg)}<small>/GB</small></b></li>`).join("")}</ul>`;
     return `<div class="tc-head"><div><span class="tc-k">${b.trip ? `Upcoming trip · ${esc(b.trip.label)}` : "No trip planned"}</span><h3>Roaming</h3></div></div>
-      <div class="tc-dests" role="group" aria-label="Destination">${DESTS.map((d) => `<button type="button" data-tc-dest="${d.k}" aria-pressed="${d.k === dk}">${d.name}<small>Zone ${d.zone}</small></button>`).join("")}</div>
-      <section class="tc-card"><header><h4>${DEST[dk].name} · ${z.label}</h4><span class="tc-sub">Without a package: ${$$(z.payg)} per GB</span></header>
+      <section class="tc-roam" aria-label="Destination">
+        <div role="group" aria-label="Destination">${map}</div>
+        <div class="tc-roam-side"><span class="tc-k">Destination</span><b class="tc-dest-name">${DEST[dk].name}</b><span class="tc-zone-tag z${zn}">${z.label}</span>
+          <p class="tc-sub">Pay-as-you-go data without a package, per GB:</p>${rates}</div>
+      </section>
+      <section class="tc-card"><header><h4>Packages for ${DEST[dk].name}</h4><span class="tc-sub">Without a package: ${$$(z.payg)} per GB</span></header>
         <div class="tc-pkgs">${z.pkgs.map((pk) => { const sel = w.roaming?.dest === dk && w.roaming.pkg === pk.k; const price = pk.perDay ? pk.perDay * ui.days : pk.price;
-          return `<div class="tc-pkg${sel ? " sel" : ""}"><b>${pk.name}</b><small>${pk.d}</small>
-            ${pk.perDay ? `<div class="tc-step" role="group" aria-label="Days"><button type="button" data-tc-days="-1" aria-label="Fewer days">−</button><span>${ui.days} day${ui.days > 1 ? "s" : ""} × ${$$(pk.perDay)}</span><button type="button" data-tc-days="1" aria-label="More days">+</button></div>` : ""}
-            <span class="tc-price sm">${$$(price)}</span>
-            <button type="button" class="tc-btn sm${sel ? " ghost" : ""}" data-tc-roam="${dk}:${pk.k}">${sel ? "Selected" : "Choose"}</button></div>`; }).join("")}</div>
+          const payg = pk.gb ? pk.gb * z.payg : 0;
+          return `<div class="tc-pkg${sel ? " sel" : ""}"><div class="tc-pkg-top"><b>${pk.name}</b><span class="tc-price sm">${$$(price)}</span></div><small>${pk.d}</small>
+            ${pk.perDay ? `<div class="tc-step" role="group" aria-label="Days"><button type="button" data-tc-days="-1" aria-label="Fewer days">−</button><span>${ui.days} day${ui.days > 1 ? "s" : ""} × ${$$(pk.perDay)}</span><button type="button" data-tc-days="1" aria-label="More days">+</button></div><p class="tc-vs-note">Uses your home allowance. No per-GB charge.</p>`
+              : `<div class="tc-vs" aria-label="${pk.gb} GB costs ${$$(pk.price)} with this package or ${$$(payg)} pay as you go"><span><i class="pk" style="width:${pc((pk.price / payg) * 100)}"></i></span><span><i class="pg" style="width:100%"></i></span></div>
+                 <p class="tc-vs-note"><b>${$$(payg - pk.price)} less</b> than ${pk.gb} GB pay as you go (${$$(payg)})</p>`}
+            <button type="button" class="tc-btn sm${sel ? " ghost" : ""}" data-tc-roam="${dk}:${pk.k}">${sel ? ico("check", 15) + "Selected" : "Choose"}</button></div>`; }).join("")}</div>
         ${w.roaming ? `<button type="button" class="tc-link" data-tc-roam="none">Remove roaming package</button>` : ""}</section>`;
   }
+
+  // Every bill line carries a one-line reason, written from the customer's own numbers.
+  function why(l, cfg, u, al) {
+    if (l.cat === "plan") { const pl = PLAN[cfg.plan]; const u2 = (n, w) => (n === INF ? "unlimited " + w : n + " " + w); return `${pl.data === INF ? `Unlimited data (${pl.fair} GB fair use)` : pl.data + " GB"}, ${u2(pl.min, "minutes")} and ${u2(pl.sms, "texts")} every month`; }
+    if (l.cat === "addons") return ADD[l.k.slice(6)].d;
+    if (l.cat === "roaming") { const ro = cfg.roaming, pk = ZONES[DEST[ro.dest].zone].pkgs.find((x) => x.k === ro.pkg); return pk.perDay ? `${ro.days} day${ro.days > 1 ? "s" : ""} × ${$$(pk.perDay)} in ${DEST[ro.dest].name}, using your home allowance` : `${pk.d} in ${DEST[ro.dest].name}, paid once`; }
+    if (l.k === "x-data") return `You've used ${gbf(u.data)} of ${al.data} GB. Each started GB over is ${$$(RATE.gb)}.`;
+    if (l.k === "x-min") return `${u.min} of ${al.min} minutes used, ${$$(RATE.min)} per extra minute`;
+    if (l.k === "x-sms") return `${u.sms} of ${al.sms} texts sent, ${$$(RATE.sms)} per extra text`;
+    return "";
+  }
+  const CATS = [["plan", "Plan"], ["addons", "Add-ons"], ["roaming", "Roaming"], ["extra", "Out of bundle"]];
+  const parts = (bl) => CATS.map(([c, l]) => [c, l, sum(bl.lines.filter((x) => x.cat === c).map((x) => x.amt))]);
   function billTab() {
-    const p = P(), bl = bill(cfgOf(p), used(p)), cats = { plan: "Plan", addons: "Add-ons", roaming: "Roaming", extra: "Out of bundle" };
+    const p = P(), cfg = cfgOf(p), u = used(p), al = allowance(cfg), bl = bill(cfg, u), pt = parts(bl);
     return `<div class="tc-head"><div><span class="tc-k">Estimate so far · bill on 1 Dec</span><h3>Bill</h3></div><b class="tc-big">${$$(bl.total)}</b></div>
-      <div class="tc-stack" aria-hidden="true">${Object.keys(cats).map((c) => { const v = sum(bl.lines.filter((l) => l.cat === c).map((l) => l.amt)); return v ? `<i class="c-${c}" style="flex:${v}"></i>` : ""; }).join("")}</div>
-      <section class="tc-card"><ul class="tc-lines">${bl.lines.map((l) => `<li class="c-${l.cat}"><span>${esc(l.label)}</span><b>${$$(l.amt)}</b></li>`).join("")}<li class="tot"><span>Total</span><b>${$$(bl.total)}</b></li></ul>
+      <div class="tc-split"><div class="tc-stack" aria-hidden="true">${pt.map(([c, , v]) => (v ? `<i class="c-${c}" data-tw="bill-${c}" style="flex:${v}"></i>` : "")).join("")}</div>
+        <ul class="tc-split-key">${pt.filter(([, , v]) => v).map(([c, l, v]) => `<li class="c-${c}"><span>${l}</span><b>${$$(v)}</b><small>${Math.round((v / bl.total) * 100)}%</small></li>`).join("")}</ul></div>
+      <section class="tc-receipt" aria-label="Bill lines"><ol class="tc-lines">${bl.lines.map((l) => `<li class="c-${l.cat}"><div><span>${esc(l.label)}</span><small>${esc(why(l, cfg, u, al))}</small></div><b>${$$(l.amt)}</b><i class="tc-share" style="width:${pc((l.amt / bl.total) * 100)}"></i></li>`).join("")}</ol>
+        <div class="tc-tot"><span>Total so far</span><b>${$$(bl.total)}</b></div>
         <p class="tc-fine">Out-of-bundle charges use what you've used so far: ${$$(RATE.gb)} per extra GB, ${$$(RATE.min)} per minute, ${$$(RATE.sms)} per text.</p></section>
       <section class="tc-card"><header><h4>Service summary</h4></header>${p.orders.length ? `<ol class="tc-orders">${p.orders.slice().reverse().map((o) => `<li><b>${o.ref}</b><span>${o.items.map(esc).join(" · ")}</span><small>Day ${o.day} · new estimate ${$$(o.total)}</small></li>`).join("")}</ol>` : `<p class="tc-empty">No changes yet. Confirmed changes appear here with a reference.</p>`}</section>`;
   }
   function support() {
     const p = P(), b = B(), cfg = cfgOf(p), u = used(p), al = allowance(cfg), pr = project(p), bl = bill(cfg, u);
     const T = {
-      data: ["My data is running out", () => `<p>${al.data === INF ? `You're on unlimited data: ${gbf(u.data)} of ${PLAN[p.plan].fair} GB fair use so far.` : `You've used <b>${gbf(u.data)}</b> of ${al.data} GB with ${CYCLE - p.day} days left. At this pace you'll reach <b>${gbf(pr.data)}</b>.`}</p>
+      data: ["My data is running out", "chart", () => `<p>${al.data === INF ? `You're on unlimited data: ${gbf(u.data)} of ${PLAN[p.plan].fair} GB fair use so far.` : `You've used <b>${gbf(u.data)}</b> of ${al.data} GB with ${CYCLE - p.day} days left. At this pace you'll reach <b>${gbf(pr.data)}</b>.`}</p>
         <div class="tc-row">${al.data !== INF && !cfg.addons.includes("booster") ? `<button type="button" class="tc-btn sm" data-tc-addon-add="booster">Add a 5 GB booster (${$$(ADD.booster.price)})</button>` : ""}<button type="button" class="tc-btn sm ghost" data-tc-tab="plans">Compare plans</button></div>`],
-      bill: ["My bill looks higher than usual", () => { const extra = bl.lines.filter((l) => l.k !== "plan").sort((a, c) => c.amt - a.amt);
-        return `<p>Your plan is ${$$(PLAN[p.plan].price)}. ${extra.length ? `On top of that:` : "Nothing has been added on top of it this month."}</p>${extra.length ? `<ul class="tc-lines mini">${extra.map((l) => `<li><span>${esc(l.label)}</span><b>${$$(l.amt)}</b></li>`).join("")}</ul>` : ""}<div class="tc-row"><button type="button" class="tc-btn sm ghost" data-tc-tab="bill">See the full bill</button></div>`; }],
-      roam: ["Will my phone work abroad?", () => { const d = b.trip ? DEST[b.trip.dest] : null;
+      bill: ["My bill looks higher than usual", "bill", () => { const extra = bl.lines.filter((l) => l.k !== "plan").sort((a, c) => c.amt - a.amt);
+        return `<p>Your plan is ${$$(PLAN[p.plan].price)}. ${extra.length ? `On top of that:` : "Nothing has been added on top of it this month."}</p>${extra.length ? `<ul class="tc-lines mini">${extra.map((l) => `<li class="c-${l.cat}"><div><span>${esc(l.label)}</span></div><b>${$$(l.amt)}</b></li>`).join("")}</ul>` : ""}<div class="tc-row"><button type="button" class="tc-btn sm ghost" data-tc-tab="bill">See the full bill</button></div>`; }],
+      roam: ["Will my phone work abroad?", "plane", () => { const d = b.trip ? DEST[b.trip.dest] : null;
         return `<p>${p.roaming ? `Yes. Your ${esc(roamingLine(p.roaming).label.replace("Roaming · ", ""))} package is active.` : d ? `It will, but without a package data in ${d.name} costs ${$$(ZONES[d.zone].payg)} per GB.` : "It will. Choose your destination to see the packages and pay-as-you-go rates."}</p><div class="tc-row"><button type="button" class="tc-btn sm ghost" data-tc-tab="roaming">Roaming options</button></div>`; }],
     };
     const t = ui.topic && T[ui.topic];
     return `<div class="tc-head"><div><span class="tc-k">Answers from your own account first</span><h3>Support</h3></div></div>
-      <div class="tc-topics" role="group" aria-label="What do you need help with?">${Object.entries(T).map(([k, [l]]) => `<button type="button" data-tc-support="${k}" aria-pressed="${ui.topic === k}">${l}</button>`).join("")}</div>
-      ${t ? `<section class="tc-card tc-answer"><header><h4>${t[0]}</h4></header>${t[1]()}
-        <div class="tc-hand">${ui.handover ? `<p class="tc-k">Shared with the agent</p><ul><li>${esc(B().name)} · ${PLAN[p.plan].name}</li><li>Topic: ${esc(t[0])}</li><li>Data ${gbf(u.data)} of ${lim(al.data, "GB")} · day ${p.day}</li><li>Bill estimate ${$$(bl.total)}</li></ul><p class="tc-fine">Demo only: no agent is contacted. The customer never has to repeat themselves.</p>`
+      <div class="tc-topics" role="group" aria-label="What do you need help with?">${Object.entries(T).map(([k, [l, i]]) => `<button type="button" data-tc-support="${k}" aria-pressed="${ui.topic === k}">${ico(i, 18)}<span>${l}</span></button>`).join("")}</div>
+      ${t ? `<section class="tc-card tc-answer"><header><h4>${t[0]}</h4></header>${t[2]()}
+        <div class="tc-hand">${ui.handover ? `<div class="tc-relay" aria-hidden="true"><span class="tc-av">${B().initials}</span><i></i><span class="tc-av agent">${ico("help", 16)}</span></div><p class="tc-k">Shared with the agent</p><ul><li>${ico("check", 14)}${esc(B().name)} · ${PLAN[p.plan].name}</li><li>${ico("check", 14)}Topic: ${esc(t[0])}</li><li>${ico("check", 14)}Data ${gbf(u.data)} of ${lim(al.data, "GB")} · day ${p.day}</li><li>${ico("check", 14)}Bill estimate ${$$(bl.total)}</li></ul><p class="tc-fine">Demo only: no agent is contacted. The customer never has to repeat themselves.</p>`
           : `<button type="button" class="tc-link" data-tc-handover>Still stuck? Talk to an agent</button>`}</div></section>` : `<p class="tc-empty">Choose a topic. The answer uses this customer's live usage and bill.</p>`}`;
   }
 
   /* ---------- Summary column ---------- */
   function summary() {
-    const p = P(), cur = bill(cfgOf(p), used(p)), cats = [["plan", "Plan"], ["addons", "Add-ons"], ["roaming", "Roaming"], ["extra", "Out of bundle"]];
-    const part = (bl) => cats.map(([c, l]) => [c, l, sum(bl.lines.filter((x) => x.cat === c).map((x) => x.amt))]);
+    const p = P(), cur = bill(cfgOf(p), used(p));
     let pend = "";
     if (S.draft) {
       const nb = bill(S.draft, used(p)), d = diff(cur, nb);
-      pend = `<div class="tc-pend" aria-live="polite"><span class="tc-k">Pending changes</span><ul>${d.map((x) => `<li><span>${esc(x.label)}</span><b>${x.from ? $$(x.from) : "—"} → ${x.to ? $$(x.to) : "—"}</b></li>`).join("")}</ul>
+      pend = `<div class="tc-pend"><span class="tc-k">Pending changes</span><ul>${d.map((x) => `<li><span>${esc(x.label)}</span><b>${x.from ? `<s>${$$(x.from)}</s>` : "<s>—</s>"} → ${x.to ? $$(x.to) : "—"}</b></li>`).join("")}</ul>
         <div class="tc-newtot"><span>New estimate</span><b>${$$(nb.total)}</b><i class="${nb.total < cur.total ? "down" : "up"}">${sd(nb.total - cur.total)}</i></div>
-        <div class="tc-row"><button type="button" class="tc-btn" data-tc-confirm>Confirm changes</button><button type="button" class="tc-btn ghost" data-tc-cancel>Discard</button></div><p class="tc-fine">Demo: nothing changes on a real account.</p></div>`;
+        <div class="tc-row"><button type="button" class="tc-btn go" data-tc-confirm>Confirm changes</button><button type="button" class="tc-btn ghost" data-tc-cancel>Discard</button></div><p class="tc-fine">Demo: nothing changes on a real account.</p></div>`;
     }
-    const last = p.orders[p.orders.length - 1];
+    const last = p.orders[p.orders.length - 1], pt = parts(cur);
     return `<span class="tc-k">This month · estimate</span><b class="tc-total">${$$(cur.total)}</b>
-      <div class="tc-stack" aria-hidden="true">${part(cur).map(([c, , v]) => (v ? `<i class="c-${c}" style="flex:${v}"></i>` : "")).join("")}</div>
-      <ul class="tc-parts">${part(cur).map(([c, l, v]) => `<li class="c-${c}"><span>${l}</span><b>${$$(v)}</b></li>`).join("")}</ul>
-      ${pend}${!S.draft && last ? `<div class="tc-done">${ico("check", 16)}<span><b>Changes confirmed</b>${last.ref} · ${last.items.map(esc).join(" · ")}</span></div>` : ""}`;
+      <span class="tc-sum-who">${esc(B().name)} · ${PLAN[p.plan].name} · day ${p.day}</span>
+      <div class="tc-stack" aria-hidden="true">${pt.map(([c, , v]) => (v ? `<i class="c-${c}" data-tw="sum-${c}" style="flex:${v}"></i>` : "")).join("")}</div>
+      <ul class="tc-parts">${pt.map(([c, l, v]) => `<li class="c-${c}${v ? "" : " zero"}"><span>${l}</span><b>${$$(v)}</b></li>`).join("")}</ul>
+      ${pend}${!S.draft && last ? `<div class="tc-done">${ico("check", 16)}<span><b>Changes confirmed</b><em>${last.ref}</em>${last.items.map(esc).join(" · ")}</span></div>` : ""}`;
   }
 
   /* ---------- Render ---------- */
   const TABS = [["overview", "Overview", "gauge"], ["usage", "Usage", "chart"], ["plans", "Plans", "plan"], ["roaming", "Roaming", "plane"], ["bill", "Bill", "bill"], ["support", "Support", "help"]];
   root.innerHTML = `<div class="tc">
     <header class="tc-top">
-      <span class="tc-brand">${ico("sig", 20)}<b>Connected</b></span>
+      <span class="tc-brand">${ico("link", 22)}<b>Connected</b></span>
       <div class="tc-people" role="group" aria-label="Customer">${Object.entries(PROFILES).map(([k, b]) => `<button type="button" data-tc-profile="${k}" aria-pressed="false"><span class="tc-av">${b.initials}</span><span><b>${b.name}</b><small>${esc(b.note)}</small></span></button>`).join("")}</div>
       <button type="button" class="tc-reset" data-tc-reset>${ico("reset", 16)}Reset</button>
     </header>
@@ -278,39 +378,51 @@
       <div class="tc-main" data-tc-main tabindex="-1"></div>
       <aside class="tc-sum" data-tc-sum aria-label="Bill estimate"></aside>
     </div>
+    <p class="tc-sr" aria-live="polite" data-tc-live></p>
   </div>`;
   const $ = (s) => root.querySelector(s);
+  const say = (m) => { const el = $("[data-tc-live]"); if (el) el.textContent = m; };
   function render(focus) {
+    // Bands and splits glide from their previous value to the new one, so every change is visible.
+    const prev = {};
+    root.querySelectorAll("[data-tw]").forEach((el) => (prev[el.dataset.tw] = el.getAttribute("style")));
     root.querySelectorAll("[data-tc-profile]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tcProfile === S.active)));
     root.querySelectorAll(".tc-nav [data-tc-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tcTab === ui.tab));
-    $("[data-tc-main]").innerHTML = { overview, usage, plans, roaming, bill: billTab, support }[ui.tab]();
+    const main = $("[data-tc-main]"), key = S.active + ":" + ui.tab;
+    main.classList.toggle("enter", main.dataset.view !== key); main.dataset.view = key;
+    main.innerHTML = { overview, usage, plans, roaming, bill: billTab, support }[ui.tab]();
     $("[data-tc-sum]").innerHTML = summary();
+    const moved = [...root.querySelectorAll("[data-tw]")].filter((el) => prev[el.dataset.tw] != null && prev[el.dataset.tw] !== el.getAttribute("style"));
+    moved.forEach((el) => { el._to = el.getAttribute("style"); el.setAttribute("style", prev[el.dataset.tw]); });
+    if (moved.length) { void root.offsetWidth; moved.forEach((el) => el.setAttribute("style", el._to)); }
     if (focus) root.querySelector(focus)?.focus({ preventScroll: true });
   }
 
   root.addEventListener("click", (e) => {
     const t = (s) => e.target.closest(s); let b;
-    if ((b = t("[data-tc-profile]"))) { if (S.active !== b.dataset.tcProfile) { S.active = b.dataset.tcProfile; S.draft = null; ui.dest = null; ui.topic = null; ui.handover = false; ui.msg = ""; save(); } return render(`[data-tc-profile="${S.active}"]`); }
+    if ((b = t("[data-tc-profile]"))) { if (S.active !== b.dataset.tcProfile) { S.active = b.dataset.tcProfile; S.draft = null; ui.dest = null; ui.topic = null; ui.handover = false; ui.msg = ""; save(); say(`Showing ${B().name}.`); } return render(`[data-tc-profile="${S.active}"]`); }
     if ((b = t("[data-tc-tab]"))) { ui.tab = b.dataset.tcTab; ui.msg = ""; return render(b.closest(".tc-nav") ? `.tc-nav [data-tc-tab="${ui.tab}"]` : "[data-tc-main]"); }
     if ((b = t("[data-tc-use]"))) {
       const a = ACTS.find((x) => x.k === b.dataset.tcUse), r = consume(P(), a, P().addons.includes("music"));
-      ui.msg = r.ok ? `${a.label}${r.gb === 0 ? ": no data used thanks to your Music pass" : ""}. Rings, chart and bill updated.` : r.why === "cap" ? `That would pass the ${DAY_CAP} GB daily limit in this demo. Move to the next day.` : "This billing month has ended.";
+      ui.msg = r.ok ? `${a.label}${r.gb === 0 ? ": no data used thanks to your Music pass" : ""}. Meters, chart and bill updated.` : r.why === "cap" ? `That would pass the ${DAY_CAP} GB daily limit in this demo. Move to the next day.` : "This billing month has ended.";
       save(); return render(`[data-tc-use="${a.k}"]`);
     }
     if (t("[data-tc-day]")) { nextDay(P()); ui.msg = `Day ${P().day}. Projection updated.`; save(); return render("[data-tc-day]"); }
-    if ((b = t("[data-tc-plan]"))) { edit((d) => (d.plan = b.dataset.tcPlan)); return render(`[data-tc-plan="${b.dataset.tcPlan}"]`); }
-    if ((b = t("[data-tc-dest]"))) { ui.dest = b.dataset.tcDest; return render(`[data-tc-dest="${ui.dest}"]`); }
+    const pendSay = () => say(S.draft ? `Pending change. New estimate ${$$(bill(S.draft, used(P())).total)}.` : "No pending changes.");
+    if ((b = t("[data-tc-plan]"))) { edit((d) => (d.plan = b.dataset.tcPlan)); pendSay(); return render(`[data-tc-plan="${b.dataset.tcPlan}"]`); }
+    if ((b = t("[data-tc-dest]"))) { ui.dest = b.dataset.tcDest; say(`${DEST[ui.dest].name}, ${ZONES[DEST[ui.dest].zone].label}.`); return render(`[data-tc-dest="${ui.dest}"]`); }
     if ((b = t("[data-tc-days]"))) {
       ui.days = Math.max(1, Math.min(14, ui.days + +b.dataset.tcDays));
       const w = working(); if (w.roaming && ZONES[DEST[w.roaming.dest].zone].pkgs.find((x) => x.k === w.roaming.pkg).perDay) edit((d) => (d.roaming = { ...d.roaming, days: ui.days }));
+      say(`${ui.days} day${ui.days > 1 ? "s" : ""}.`);
       return render(`[data-tc-days="${b.dataset.tcDays}"]`);
     }
     if ((b = t("[data-tc-roam]"))) {
       const v = b.dataset.tcRoam;
       if (v === "none") edit((d) => (d.roaming = null)); else { const [dest, pkg] = v.split(":"); edit((d) => (d.roaming = { dest, pkg, days: ui.days })); }
-      return render(v === "none" ? "[data-tc-main]" : `[data-tc-roam="${v}"]`);
+      pendSay(); return render(v === "none" ? "[data-tc-main]" : `[data-tc-roam="${v}"]`);
     }
-    if ((b = t("[data-tc-addon-add]"))) { edit((d) => { if (!d.addons.includes(b.dataset.tcAddonAdd)) d.addons.push(b.dataset.tcAddonAdd); }); return render("[data-tc-confirm]"); }
+    if ((b = t("[data-tc-addon-add]"))) { edit((d) => { if (!d.addons.includes(b.dataset.tcAddonAdd)) d.addons.push(b.dataset.tcAddonAdd); }); pendSay(); return render("[data-tc-confirm]"); }
     if (t("[data-tc-confirm]")) {
       const p = P(), before = cfgOf(p), after = S.draft, items = [];
       if (after.plan !== before.plan) items.push(`Plan ${PLAN[before.plan].name} → ${PLAN[after.plan].name}`);
@@ -321,17 +433,19 @@
       const ref = "CX-" + (4100 + Object.values(S.p).reduce((n, x) => n + x.orders.length, 0) + 1);
       p.orders.push({ ref, items, day: p.day, total: bill(cfgOf(p), used(p)).total });
       p.log.push({ t: `Changes confirmed · ${ref}`, d: items.join(" · ") });
-      S.draft = null; save(); return render("[data-tc-main]");
+      S.draft = null; save(); say(`Changes confirmed. Reference ${ref}.`); return render("[data-tc-main]");
     }
-    if (t("[data-tc-cancel]")) { S.draft = null; save(); return render("[data-tc-main]"); }
+    if (t("[data-tc-cancel]")) { S.draft = null; save(); say("Changes discarded."); return render("[data-tc-main]"); }
     if ((b = t("[data-tc-support]"))) { ui.topic = b.dataset.tcSupport; ui.handover = false; return render(`[data-tc-support="${ui.topic}"]`); }
-    if (t("[data-tc-handover]")) { ui.handover = true; return render(".tc-hand"); }
-    if (t("[data-tc-reset]")) { S = fresh(); Object.assign(ui, { tab: "overview", dest: null, days: 3, topic: null, handover: false, msg: "" }); save(); return render("[data-tc-reset]"); }
+    if (t("[data-tc-handover]")) { ui.handover = true; say("Context shared with the agent."); return render(".tc-hand"); }
+    if (t("[data-tc-reset]")) { S = fresh(); Object.assign(ui, { tab: "overview", dest: null, days: 3, topic: null, handover: false, msg: "" }); save(); say("Demo reset."); return render("[data-tc-reset]"); }
   });
   root.addEventListener("change", (e) => {
     const a = e.target.dataset.tcAddon; if (!a) return;
     edit((d) => { d.addons = e.target.checked ? [...new Set([...d.addons, a])] : d.addons.filter((x) => x !== a); });
+    say(S.draft ? `Pending change. New estimate ${$$(bill(S.draft, used(P())).total)}.` : "No pending changes.");
     render(`[data-tc-addon="${a}"]`);
   });
+  if (mq) (mq.addEventListener ? mq.addEventListener("change", () => render()) : mq.addListener(() => render()));
   render();
 })();
