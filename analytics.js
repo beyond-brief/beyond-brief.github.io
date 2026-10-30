@@ -103,6 +103,9 @@
     }
     const b = e.target.closest("button");
     if (!b) return;
+    // Industry demos: data-fh-*, data-bs-*, data-hs-*, data-tc-*, data-cl-* become fh_*, bs_*... events (names only)
+    const dk = Object.keys(b.dataset).find((x) => /^(fh|bs|hs|tc|cl)[A-Z]/.test(x));
+    if (dk) track(dk.slice(0, 2) + "_" + dk.slice(2).replace(/[A-Z]/g, (m) => "_" + m.toLowerCase()).slice(1), { value: clean(b.dataset[dk]) });
     if (b.matches("[data-dropdown]")) track("nav_menu_open", { menu: clean(b.textContent) });
     else if (b.matches(".menu-btn")) track("nav_mobile_menu", { state: b.getAttribute("aria-expanded") === "true" ? "close" : "open" });
     const scenario = { leyla: "A", murad: "B", aylin: "C" };
@@ -132,6 +135,8 @@
     const ctl = e.target.closest("[data-ctl]");
     if (ctl) c360("control_change", { control: ctl.dataset.ctl });
     if (e.target.dataset.assumeKey) track("strat_assumption", { assumption: e.target.dataset.assumeKey });
+    const ck = Object.keys(e.target.dataset || {}).find((x) => /^(fh|bs|hs|tc|cl)[A-Z]/.test(x));
+    if (ck && e.target.type !== "text" && e.target.tagName !== "TEXTAREA") track(ck.slice(0, 2) + "_" + ck.slice(2).replace(/[A-Z]/g, (m) => "_" + m.toLowerCase()).slice(1), { value: clean(e.target.type === "checkbox" ? String(e.target.checked) : e.target.dataset[ck]) });
     if (e.target.matches("[data-ee-stagesel]")) track("ee_stage_change", { to: e.target.value, bulk: "no" });
   }, true);
 
