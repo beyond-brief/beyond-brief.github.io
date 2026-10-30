@@ -127,7 +127,7 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
   }));
 });
 
-// Contact form: prefill from the page that sent the visitor, validate locally, never pretend to send
+// Contact form: prefill from the page that sent the visitor, validate locally, post straight to Netlify Forms
 (() => {
   const form = document.getElementById("contact-form");
   if (!form) return;
@@ -144,7 +144,6 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
     ref.innerHTML = `<b>About:</b> ${titles[concept].replace(/[<>&]/g, "")} · you can change the details below.`;
   }
   const note = document.getElementById("form-note");
-  const loaded = Date.now();
   // A brief the visitor chose to bring over from the AI Concierge. Filled in for review, never sent automatically.
   const LABELS = { objective: "Goal", challenge: "Challenge", audience: "Customers", timeline: "Timing", success: "Success looks like" };
   const fromConcierge = () => {
@@ -165,8 +164,20 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
   window.addEventListener("bb-concierge-brief", fromConcierge);
   const rules = {
     name: (v) => v.trim() ? "" : "Please tell us your name.",
-    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Please enter a valid email address.",
-    message: (v) => v.trim().length >= 20 ? "" : "A sentence or two (at least 20 characters) helps us reply usefully.",
+    email: (v) => /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[^\s@.]{2,}$/.test(v.trim()) ? "" : "Please enter a valid email address.",
+    message: (v) => v.trim().length >= 10 ? "" : "Please add a few words about what you need.",
+  };
+  // A likely typo gets one gentle question. It never blocks: pressing send again goes ahead.
+  const MAIL_HOSTS = ["gmail.com", "ymail.com", "mail.com", "outlook.com", "hotmail.com", "live.com", "yahoo.com", "icloud.com", "mail.ru", "yandex.ru", "yandex.com", "proton.me"];
+  const oneEditAway = (a, b) => {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0; while (i < a.length && a[i] === b[i]) i++;
+    const tail = (x, n) => x.slice(i + n);
+    return tail(a, 1) === tail(b, 1) || tail(a, 1) === tail(b, 0) || tail(a, 0) === tail(b, 1) || (a[i] === b[i + 1] && a[i + 1] === b[i] && tail(a, 2) === tail(b, 2));
+  };
+  const emailTypo = (v) => {
+    const domain = v.trim().toLowerCase().split("@")[1] || "";
+    return MAIL_HOSTS.includes(domain) ? "" : MAIL_HOSTS.find((h) => oneEditAway(domain, h)) || "";
   };
   const check = (name) => {
     const field = form[name], msg = rules[name](field.value);
@@ -180,22 +191,31 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
     const bad = Object.keys(rules).filter((n) => !check(n));
     note.classList.toggle("ok", !bad.length); // analytics reads this right after submit: a complete form, not delivery
     if (bad.length) { note.textContent = `Please check ${bad.length === 1 ? "one field" : `${bad.length} fields`} above.`; form[bad[0]].focus(); return; }
-    if (form.website.value) return; // honeypot filled: silently ignore bots
+    const typo = emailTypo(form.email.value);
+    if (typo && form.dataset.asked !== form.email.value) {
+      form.dataset.asked = form.email.value;
+      note.classList.remove("ok");
+      note.textContent = "";
+      document.getElementById("err-email").textContent = `Did you mean ${typo}? If your address is correct, press send again.`;
+      form.email.focus();
+      return;
+    }
+    document.getElementById("err-email").textContent = "";
+    if (form.bb_check.value) return; // honeypot filled: silently ignore bots
     const endpoint = form.dataset.endpoint;
     if (!endpoint) { note.textContent = "Everything looks complete, but online sending isn't switched on yet, so your message has not been sent."; return; }
-    // Delivery: success is shown only when the server confirms it (see docs/AI-CONCIERGE.md).
+    // Netlify Forms answers before its spam filter decides, so success can only mean the message was submitted.
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; note.textContent = "Sending…";
-    const body = { ...Object.fromEntries(new FormData(form)), t: Date.now() - loaded, source: form.dataset.source || "form" };
-    fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      .then(async (r) => {
-        if (r.ok) { note.textContent = "Thanks. Your message has been received."; form.reset(); delete form.dataset.source; document.getElementById("concept-ref").hidden = true; return; }
-        note.classList.remove("ok");
-        const data = await r.json().catch(() => ({}));
-        if (r.status === 422 && data.fields) { Object.keys(data.fields).filter((n) => rules[n]).forEach(check); note.textContent = "Please check the highlighted fields."; return; }
-        note.textContent = r.status === 429 ? "You've sent a few messages in a short time. Please try again in a minute." : "Sorry, your message couldn't be sent. Your text is still here, so please try again in a moment.";
+    const failed = () => { note.classList.remove("ok"); note.textContent = "Sorry, your message couldn't be sent. Your text is still here, so please try again in a moment."; };
+    const body = new URLSearchParams({ ...Object.fromEntries(new FormData(form)), "form-name": "contact", source: form.dataset.source || "form" });
+    fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body.toString(), signal: AbortSignal.timeout(15000) })
+      .then((r) => {
+        if (!r.ok) return failed();
+        note.textContent = "Thanks. Your message has been submitted.";
+        form.reset(); delete form.dataset.source; delete form.dataset.asked; document.getElementById("concept-ref").hidden = true;
       })
-      .catch(() => { note.classList.remove("ok"); note.textContent = "Sorry, your message couldn't be sent. Your text is still here, so please try again in a moment."; })
+      .catch(failed)
       .finally(() => { btn.disabled = false; });
   });
 })();

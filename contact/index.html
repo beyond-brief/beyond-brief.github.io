@@ -29,7 +29,7 @@
     <h3 class="h3 mt-l">What happens next<span class="dot">.</span></h3>
     <ol class="steps-v mt-m"><li><div><h3>We read it properly</h3><p>And reply with questions, not a sales pitch.</p></div></li><li><div><h3>A 30-minute call</h3><p>To understand the problem and whether we're the right fit.</p></div></li><li><div><h3>A short proposal</h3><p>Scope, options and cost on two pages.</p></div></li></ol>
   </div>
-  <form class="form" id="contact-form" novalidate data-endpoint="https://beyond-brief-concierge.netlify.app/contact" method="post" action="#">
+  <form class="form" id="contact-form" novalidate data-endpoint="https://beyond-brief-concierge.netlify.app/forms.html" method="post" action="#">
     <p class="small muted" style="margin:0">Fields marked * are required. Everything else is optional.</p>
     <p class="cm-ref" id="concept-ref" hidden></p><input type="hidden" name="concept">
     <script type="application/json" id="concept-titles">{"digital-banking-workspace":"Digital Banking Growth Workspace","branchone":"BranchOne","commerce-workspace":"Commerce Growth Workspace","guestloop":"GuestLoop","lifecycle-view":"Subscriber lifecycle view","campusflow":"CampusFlow","customer-intelligence-os":"Customer Intelligence OS","customer-360":"Customer 360","growth-journey-intelligence":"CX & Journey Intelligence","multi-location-platform":"BranchOne","education-operations-platform":"EnrollEase","enrollease":"EnrollEase","loyalty-lab":"Loyalty Experience Lab","financial-hub":"Financial Experience Hub","beauty-studio":"Beauty Experience Studio","hospitality-studio":"Hospitality Experience Studio","connected-experience":"Connected Experience","commerce-lab":"Commerce Experience Lab","smart-business-operations":"Smart Business Operations","ai-business-automation":"Business Automation Studio"}</script>
@@ -42,12 +42,12 @@
       <label>Industry<select name="industry"><option value="">Select an industry</option><option value="fintech-digital-banking">Fintech & Digital Banking</option><option value="beauty-wellness-services">Beauty & Wellness</option><option value="hospitality-leisure">Hospitality & Restaurants</option><option value="telecom-subscriptions">Telecom</option><option value="education-edtech">Education & EdTech</option><option value="retail-ecommerce">Retail & E-commerce</option><option value="other">Other</option></select></label>
     </div>
     <label>Type of project<select name="project"><option value="">Select a type of project</option><option value="market-research-strategy">Strategy & Market Research</option><option value="customer-experience">Customer Experience, UX & Digital Experiences</option><option value="customer-growth-intelligence">Customer Growth, Loyalty & Gamification</option><option value="campaigns-data-creative">Campaigns, Data & Creative</option><option value="not-sure">Not sure yet</option></select></label>
-    <label>Project description *<textarea name="message" required minlength="20" placeholder="What are you trying to improve, and why now?" aria-describedby="err-message"></textarea><span class="field-err" id="err-message"></span></label>
+    <label>Project description *<textarea name="message" required minlength="10" placeholder="What are you trying to improve, and why now?" aria-describedby="err-message"></textarea><span class="field-err" id="err-message"></span></label>
     <div class="two">
       <label>Approximate budget<select name="budget"><option value="">Prefer not to say</option><option>Under $10,000</option><option>$10,000–$25,000</option><option>$25,000–$75,000</option><option>$75,000+</option><option>Not sure yet</option></select></label>
       <label>Preferred contact method<select name="method"><option value="">No preference</option><option>Email</option><option>Phone</option><option>Video call</option></select></label>
     </div>
-    <div class="hp" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+    <div class="hp" aria-hidden="true"><label>Leave this field empty<input name="bb_check" tabindex="-1" autocomplete="off"></label></div>
     <p class="small muted" style="margin:0">We'll only use these details to reply to your enquiry. We don't add you to mailing lists.</p>
     <div><button class="btn" type="submit">Check and send <svg class="arr" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
