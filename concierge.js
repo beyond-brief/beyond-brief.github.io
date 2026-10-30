@@ -33,7 +33,7 @@
         <button type="button" class="bc-icon" data-bc-close aria-label="Close">${ic("close")}</button></header>
       <div class="bc-log" role="log" aria-live="polite" aria-relevant="additions" tabindex="0" data-bc-log></div>
       <form class="bc-form" data-bc-form><label class="sr-only" for="bc-input">Message</label>
-        <textarea id="bc-input" rows="1" maxlength="${MAX}" placeholder="Ask about our work, or describe your project" autocomplete="off"></textarea>
+        <textarea id="bc-input" rows="1" maxlength="${MAX}" placeholder="Ask us about your project" autocomplete="off"></textarea>
         <button type="submit" class="bc-send" aria-label="Send">${ic("send")}</button>
         <p class="bc-count" aria-live="polite" data-bc-count></p></form>
     </section>`;
