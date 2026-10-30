@@ -278,3 +278,69 @@
   .cx-phone-wrap { order: 1; margin-top: 36px; }
   .cx-notes { order: 2; }
 }
+
+/* ==========================================================================
+   Journey Lab v2: a service design workspace. Two lenses on one journey:
+   the experience map (actions, touchpoints, feelings) and the service
+   blueprint (frontstage, backstage, support processes and the three lines).
+   ========================================================================== */
+.jl { border-radius: 24px; box-shadow: 0 1px 0 rgba(16,17,20,.04), 0 60px 120px -60px rgba(16,17,20,.35); }
+.jl-bar { padding: 14px 18px; background: linear-gradient(180deg, #F7F9FC, #F1F4F9); }
+.jl-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.jl-lens { display: inline-flex; padding: 4px; border-radius: 12px; background: var(--ink); }
+.jl-lens button { font: 700 13px/1.2 var(--font); padding: 9px 14px; border: 0; border-radius: 9px; background: transparent; color: rgba(245,247,250,.62); cursor: pointer; transition: background-color .25s, color .25s; }
+.jl-lens button:hover { color: var(--text); }
+.jl-lens button[aria-pressed="true"] { background: rgba(245,247,250,.14); color: var(--text); }
+.jl-mode button[data-jl-mode="imp"][aria-pressed="true"] { background: var(--accent); color: var(--ink); }
+.jl-reset { font: 700 13px/1.2 var(--font); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--jl-line); background: var(--white); color: var(--ink); cursor: pointer; }
+.jl-reset:hover { border-color: var(--ink); }
+.jl :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Lane labels swap with the lens */
+.jl-lane .b, .jl[data-lens="blueprint"] .jl-lane .m, .jl[data-lens="blueprint"] .mp, .jl .bp { display: none; }
+.jl[data-lens="blueprint"] .jl-lane .b { display: inline; }
+.jl[data-lens="blueprint"] .bp { display: grid; }
+.jl[data-lens="blueprint"] .jl-lane.bp { display: block; }
+.jl[data-lens="blueprint"] small.m { display: none; }
+.jl-rule { grid-column: 1 / -1; position: relative; height: 0; border-top: 2px solid var(--ink); margin: 6px 0; }
+.jl-rule.vis { border-top-style: dashed; border-color: var(--accent); }
+.jl-rule span { position: absolute; right: 0; top: -10px; padding: 2px 8px; border-radius: 999px; background: var(--ink); color: var(--text); font: 700 10px/1.4 var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+.jl-rule.vis span { background: var(--accent); color: var(--ink); }
+.jl[data-lens="blueprint"] .jl-row { border-top: 0; }
+.jl[data-lens="blueprint"] .jl-lane { border-top: 0; padding-top: 16px; }
+.jl[data-lens="blueprint"] [data-row="doing"] .jl-cell p { font-weight: 700; }
+.jl-sys { background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(8,124,255,.05) 7px 8px); }
+.jl-sys .jl-cell p { font: 500 12.5px/1.45 var(--mono); color: var(--ink-2); }
+.jl[data-lens="blueprint"] [data-row="tp"] .jl-tp { background: #F4F7FB; }
+.jl-legend .lg-line::before { border-top: 2px dashed var(--accent); }
+
+/* Stage columns read as columns */
+.jl-stages button { border-radius: 12px; padding: 12px 12px 13px; }
+.jl-stages button[aria-selected="true"] { box-shadow: 0 14px 28px -16px rgba(16,17,20,.55); }
+.jl-cell.on { background: linear-gradient(180deg, rgba(8,124,255,.075), rgba(8,124,255,.03)); }
+
+/* Emotion lane: a smooth curve over a soft area, readable labels */
+.jl-feel { height: 168px; margin: 10px 0 36px; border-radius: 14px; background: linear-gradient(180deg, rgba(24,160,96,.05) 0%, transparent 42%, transparent 58%, rgba(214,104,40,.06) 100%); }
+.jl-area { fill: rgba(16,17,20,.05); transition: d .6s var(--ease); }
+.jl[data-mode="imp"] .jl-area { fill: rgba(8,124,255,.08); }
+.jl-line { stroke-width: 3; stroke-linecap: round; }
+.jl-dot i { width: 18px; height: 18px; left: -9px; top: -9px; }
+.jl-dot b { top: 17px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,.9); }
+
+/* Detail: research → decision reads left to right */
+.jl-detail { border-radius: 18px; background: linear-gradient(180deg, #FBFCFE, #F6F8FB); }
+.jl-block { border-radius: 14px; }
+.jl-d-body { position: relative; }
+@media (min-width: 901px) {
+  .jl[data-mode="cur"] .jl-d-body .jl-block + .jl-block::before, .jl[data-mode="imp"] .jl-d-body .jl-block + .jl-block::before { content: "→"; position: absolute; margin: 18px 0 0 -13px; width: 14px; text-align: center; font-weight: 700; color: var(--ink-2); }
+  .jl-block { position: relative; }
+}
+@media (max-width: 900px) {
+  .jl-tools { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .jl-lens, .jl-mode { width: 100%; }
+  .jl-lens button, .jl-mode button { flex: 1; padding: 9px 6px; }
+  .jl-reset { grid-column: 1 / -1; }
+  .jl-rule, .jl .bp, .jl[data-lens="blueprint"] .bp { display: none; }
+  .jl[data-lens="blueprint"] .mp { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .jl *, .jl *::before, .jl *::after { animation: none !important; transition: none !important; } }

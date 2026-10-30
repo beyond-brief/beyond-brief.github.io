@@ -100,11 +100,18 @@
     },
   ];
 
+  // Support processes for the service-blueprint lens: [current, improved] per stage.
+  const SYS = {
+    nigar: [["Product pages edited by hand in the CMS", "Product catalogue publishes fees to web and app"], ["Form mirrors the paper branch form", "ID-scan service and a saved-draft store"], ["Selfie-match vendor and a manual review queue", "Video-verification scheduling and routing rules"], ["Card platform default: foreign use off", "Activation writes travel use to the card platform"], ["Separate chat and telephony systems", "One case record shared by chat and phone"]],
+    rauf: [["CRM has no 'move' order type", "A moving-home order type in the CRM"], ["Three queues: sales, technical, billing", "One moving-home queue with account lookup"], ["Engineer slots booked after approval", "Live engineer calendar at the point of request"], ["Routes planned in half-day windows", "Two-hour routing and an on-the-way SMS trigger"], ["Old service closed by a manual request", "Old service closes automatically on install day"]],
+    aysel: [["Course pages per faculty, no shared template", "Shared course template with time estimates"], ["Reporting needs a full profile at sign-up", "Profile questions spread over week one"], ["Progress saved only at lesson end", "Autosave every minute, on every device"], ["One fixed reminder schedule for everyone", "Reminder rules that follow each learner's pace"], ["Certificate only at the very end", "Module milestones issued automatically"]],
+  };
+
   /* ---------- Journey Lab ---------- */
   const lab = document.querySelector("[data-journey-lab]");
   if (lab) {
     const N = 5;
-    let p = PERSONAS[0], mode = "cur", si = 0;
+    let p = PERSONAS[0], mode = "cur", si = 0, lens = "map";
     const worst = (per) => per.stages.reduce((b, s, i) => (s.cur.e < per.stages[b].cur.e ? i : b), 0);
     si = worst(p);
 
@@ -118,7 +125,11 @@
     };
     const y = (e) => 22 + (2 - e) * 29; // feeling −2…+2 → 138…22 of a 160-unit lane
     const pts = (key) => p.stages.map((s, i) => [(i + 0.5) * 200, y(s[key].e)]);
-    const path = (ps) => ps.map(([x, yy], i) => (i ? "L" : "M") + x + " " + yy).join(" ");
+    const path = (ps) => ps.map(([x, yy], i) => {
+      if (!i) return `M${x} ${yy}`;
+      const [x0, y0] = ps[Math.max(0, i - 2)], [x1, y1] = ps[i - 1], [x3, y3] = ps[Math.min(ps.length - 1, i + 1)];
+      return `C${x1 + (x - x0) / 6} ${y1 + (yy - y0) / 6} ${x - (x3 - x1) / 6} ${yy - (y3 - y1) / 6} ${x} ${yy}`;
+    }).join(" ");
     const signed = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n).toFixed(1);
     const stat = (key) => {
       const ss = p.stages.map((s) => s[key]);
@@ -132,7 +143,9 @@
     lab.innerHTML = `
       <div class="jl-bar">
         <div class="jl-people" role="group" aria-label="Choose a persona">${PERSONAS.map((x) => `<button type="button" class="jl-who" data-jl-persona="${x.id}" aria-pressed="false"><span class="jl-mono" aria-hidden="true">${x.initials}</span><span class="jl-who-t"><b>${x.name}</b><small>${x.sector}</small></span></button>`).join("")}</div>
-        <div class="jl-mode" role="group" aria-label="Journey version"><button type="button" data-jl-mode="cur" aria-pressed="true">Current experience</button><button type="button" data-jl-mode="imp" aria-pressed="false">Improved experience</button></div>
+        <div class="jl-tools"><div class="jl-lens" role="group" aria-label="View"><button type="button" data-jl-lens="map" aria-pressed="true">Experience map</button><button type="button" data-jl-lens="blueprint" aria-pressed="false">Service blueprint</button></div>
+        <div class="jl-mode" role="group" aria-label="Journey version"><button type="button" data-jl-mode="cur" aria-pressed="true">Current</button><button type="button" data-jl-mode="imp" aria-pressed="false">Future state</button></div>
+        <button type="button" class="jl-reset" data-jl-reset>Reset</button></div>
       </div>
       <div class="jl-main">
         <aside class="jl-persona" data-jl-profile aria-live="polite"></aside>
@@ -142,17 +155,21 @@
           <div class="jl-grid">
             <span class="jl-lane">Stage</span>
             <div class="jl-stages" role="tablist" aria-label="Journey stages">${Array.from({ length: N }, (_, i) => `<button type="button" role="tab" id="jl-t${i}" aria-controls="jl-panel" data-jl-stage="${i}"><span class="n">0${i + 1}</span><span class="nm"></span></button>`).join("")}</div>
-            <span class="jl-lane">Doing</span><div class="jl-row" data-row="doing"></div>
-            <span class="jl-lane">Touchpoints</span><div class="jl-row" data-row="tp"></div>
-            <span class="jl-lane">Feeling<small>+2 … −2</small></span>
-            <div class="jl-feel">
+            <span class="jl-lane"><span class="m">Doing</span><span class="b">Customer actions</span></span><div class="jl-row" data-row="doing"></div>
+            <div class="jl-rule bp"><span>Line of interaction</span></div>
+            <span class="jl-lane"><span class="m">Touchpoints</span><span class="b">Frontstage</span></span><div class="jl-row" data-row="tp"></div>
+            <span class="jl-lane mp">Feeling<small>+2 … −2</small></span>
+            <div class="jl-feel mp">
               <svg viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
                 <line class="jl-zero" x1="0" y1="${y(0)}" x2="1000" y2="${y(0)}"/>
-                <path class="jl-gain" d=""/><path class="jl-line cur" d=""/><path class="jl-line imp" d=""/>
+                <path class="jl-area" d=""/><path class="jl-gain" d=""/><path class="jl-line cur" d=""/><path class="jl-line imp" d=""/>
               </svg>
               ${Array.from({ length: N }, (_, i) => `<span class="jl-dot" data-i="${i}" style="left:${(i + 0.5) * 20}%"><i></i><b></b></span>`).join("")}
             </div>
-            <span class="jl-lane jl-vis">Backstage<small>Line of visibility</small></span><div class="jl-row jl-back" data-row="back"></div>
+            <div class="jl-rule bp vis"><span>Line of visibility</span></div>
+            <span class="jl-lane jl-vis">Backstage<small class="m">Line of visibility</small></span><div class="jl-row jl-back" data-row="back"></div>
+            <div class="jl-rule bp"><span>Line of internal interaction</span></div>
+            <span class="jl-lane bp">Support processes</span><div class="jl-row jl-sys bp" data-row="sys"></div>
           </div>
           <div class="jl-detail" role="tabpanel" id="jl-panel" tabindex="0"></div>
         </div>
@@ -177,7 +194,7 @@
     function detail() {
       const s = p.stages[si], c = s.cur, m = s.imp, k = s[mode];
       const head = `<div class="jl-d-head"><span class="jl-k">Stage 0${si + 1} of ${N}</span><h4>${esc(s.name)}</h4><span class="jl-feel-tag f${k.e}">Feeling: ${FEEL[k.e]}</span></div>`;
-      const dup = `<div class="jl-dup"><dl><div><dt>Doing</dt><dd>${esc(k.doing)}</dd></div><div><dt>Touchpoints</dt><dd><ul class="jl-tps">${tps(s)}</ul></dd></div><div><dt>Backstage</dt><dd>${esc(k.back)}</dd></div></dl></div>`;
+      const dup = `<div class="jl-dup"><dl><div><dt>Doing</dt><dd>${esc(k.doing)}</dd></div><div><dt>Touchpoints</dt><dd><ul class="jl-tps">${tps(s)}</ul></dd></div><div><dt>Backstage</dt><dd>${esc(k.back)}</dd></div><div><dt>Support processes</dt><dd>${esc(SYS[p.id][si][mode === "cur" ? 0 : 1])}</dd></div></dl></div>`;
       const body = mode === "cur"
         ? `<div class="jl-block pain"><span class="jl-k">Pain point · ${c.sev === "high" ? "high" : "medium"} impact</span><p>${esc(c.pain)}</p></div>
            <div class="jl-block opp"><span class="jl-k">Opportunity</span><p>${esc(c.opp)}</p></div>
@@ -190,11 +207,12 @@
     }
 
     function render(focus) {
-      lab.dataset.mode = mode;
+      lab.dataset.mode = mode; lab.dataset.lens = lens;
+      lab.querySelectorAll("[data-jl-lens]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.jlLens === lens)));
       lab.querySelectorAll("[data-jl-persona]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.jlPersona === p.id)));
       lab.querySelectorAll("[data-jl-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.jlMode === mode)));
       $("[data-jl-title]").textContent = p.journey;
-      $("[data-jl-legend]").innerHTML = mode === "cur"
+      $("[data-jl-legend]").innerHTML = lens === "blueprint" ? '<li class="lg-line">Line of visibility: below it, the customer never sees the work</li>' : mode === "cur"
         ? '<li class="lg-cur">Current feeling</li><li class="lg-pain">Pain point</li>'
         : '<li class="lg-ghost">Current</li><li class="lg-imp">Improved</li><li class="lg-gain">Difference</li>';
       tabs.forEach((t, i) => {
@@ -206,11 +224,13 @@
       $('[data-row="doing"]').innerHTML = p.stages.map((s, i) => cell(i, `<p>${esc(s[mode].doing)}</p>`)).join("");
       $('[data-row="tp"]').innerHTML = p.stages.map((s, i) => cell(i, `<ul class="jl-tps">${tps(s)}</ul>`)).join("");
       $('[data-row="back"]').innerHTML = p.stages.map((s, i) => cell(i, `<p>${esc(s[mode].back)}</p>`)).join("");
+      $('[data-row="sys"]').innerHTML = p.stages.map((s, i) => cell(i, `<p>${esc(SYS[p.id][i][mode === "cur" ? 0 : 1])}</p>`)).join("");
 
       const c = pts("cur"), m = pts("imp");
       $(".jl-line.cur").setAttribute("d", path(c));
       $(".jl-line.imp").setAttribute("d", path(m));
       $(".jl-gain").setAttribute("d", path(m) + " " + path(c.slice().reverse()).replace("M", "L") + " Z");
+      $(".jl-area").setAttribute("d", path(mode === "cur" ? c : m) + ` L${(N - 0.5) * 200} ${y(0)} L100 ${y(0)} Z`);
       dots.forEach((d, i) => {
         const s = p.stages[i], k = s[mode];
         d.style.top = (y(k.e) / 160) * 100 + "%";
@@ -232,7 +252,9 @@
     };
 
     lab.addEventListener("click", (e) => {
-      const per = e.target.closest("[data-jl-persona]"), md = e.target.closest("[data-jl-mode]");
+      const per = e.target.closest("[data-jl-persona]"), md = e.target.closest("[data-jl-mode]"), ln = e.target.closest("[data-jl-lens]");
+      if (ln) { if (ln.dataset.jlLens !== lens) { lens = ln.dataset.jlLens; render(); $("[data-jl-live]").textContent = lens === "blueprint" ? "Service blueprint: frontstage, backstage and support processes." : "Experience map: actions, touchpoints and feelings."; } return; }
+      if (e.target.closest("[data-jl-reset]")) { p = PERSONAS[0]; mode = "cur"; lens = "map"; si = worst(p); render(); $("[data-jl-live]").textContent = "Journey Lab reset."; return; }
       const st = e.target.closest("[data-jl-stage]") || e.target.closest(".jl-cell, .jl-dot");
       if (per) { if (per.dataset.jlPersona === p.id) return; p = PERSONAS.find((x) => x.id === per.dataset.jlPersona); si = worst(p); render(); announce(); }
       else if (md) { if (md.dataset.jlMode === mode) return; mode = md.dataset.jlMode; lab.classList.remove("drawn"); void lab.offsetWidth; lab.classList.add("drawn"); render(); announce(); }
