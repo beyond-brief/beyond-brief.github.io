@@ -29,7 +29,7 @@
     <h3 class="h3 mt-l">What happens next<span class="dot">.</span></h3>
     <ol class="steps-v mt-m"><li><div><h3>We read it properly</h3><p>And reply with questions, not a sales pitch.</p></div></li><li><div><h3>A 30-minute call</h3><p>To understand the problem and whether we're the right fit.</p></div></li><li><div><h3>A short proposal</h3><p>Scope, options and cost on two pages.</p></div></li></ol>
   </div>
-  <form class="form" id="contact-form" novalidate data-endpoint="" method="post" action="#">
+  <form class="form" id="contact-form" novalidate data-endpoint="https://beyond-brief-concierge.netlify.app/contact" method="post" action="#">
     <p class="small muted" style="margin:0">Fields marked * are required. Everything else is optional.</p>
     <p class="cm-ref" id="concept-ref" hidden></p><input type="hidden" name="concept">
     <script type="application/json" id="concept-titles">{"digital-banking-workspace":"Digital Banking Growth Workspace","branchone":"BranchOne","commerce-workspace":"Commerce Growth Workspace","guestloop":"GuestLoop","lifecycle-view":"Subscriber lifecycle view","campusflow":"CampusFlow","customer-intelligence-os":"Customer Intelligence OS","customer-360":"Customer 360","growth-journey-intelligence":"CX & Journey Intelligence","multi-location-platform":"BranchOne","education-operations-platform":"EnrollEase","enrollease":"EnrollEase","loyalty-lab":"Loyalty Experience Lab","financial-hub":"Financial Experience Hub","beauty-studio":"Beauty Experience Studio","hospitality-studio":"Hospitality Experience Studio","connected-experience":"Connected Experience","commerce-lab":"Commerce Experience Lab","smart-business-operations":"Smart Business Operations","ai-business-automation":"Business Automation Studio"}</script>
@@ -50,7 +50,7 @@
     <div class="hp" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
     <p class="small muted" style="margin:0">We'll only use these details to reply to your enquiry. We don't add you to mailing lists.</p>
     <div><button class="btn" type="submit">Check and send <svg class="arr" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-    <p class="form-note" id="form-note" role="status" aria-live="polite">This local preview isn't connected to a server yet, so messages can't be delivered.</p>
+    <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
   </form>
 </div></section>
 </main>
@@ -68,4 +68,7 @@
 <script src="/site.js" defer></script>
 <script>window.BB_ANALYTICS={"ga4":"G-ZP25CGQ1V7"}</script>
 <script src="/analytics.js" defer></script>
+<link rel="stylesheet" href="/concierge.css">
+<script>window.BB_CONCIERGE={"endpoint":"https://beyond-brief-concierge.netlify.app"}</script>
+<script src="/concierge.js" defer></script>
 </body></html>

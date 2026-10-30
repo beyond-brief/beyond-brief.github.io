@@ -144,6 +144,25 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
     ref.innerHTML = `<b>About:</b> ${titles[concept].replace(/[<>&]/g, "")} · you can change the details below.`;
   }
   const note = document.getElementById("form-note");
+  const loaded = Date.now();
+  // A brief the visitor chose to bring over from the AI Concierge. Filled in for review, never sent automatically.
+  const LABELS = { objective: "Goal", challenge: "Challenge", audience: "Customers", timeline: "Timing", success: "Success looks like" };
+  const fromConcierge = () => {
+    let b = null;
+    try { b = JSON.parse(sessionStorage.getItem("bb-concierge-brief")); sessionStorage.removeItem("bb-concierge-brief"); } catch {}
+    if (!b || typeof b !== "object") return;
+    const text = Object.entries(LABELS).filter(([k]) => typeof b[k] === "string" && b[k].trim()).map(([k, l]) => `${l}: ${b[k].trim()}`).join("\n");
+    if (!text) return;
+    form.message.value = text.slice(0, 5000);
+    for (const k of ["industry", "project"]) { const v = k === "project" ? b.service : b.industry; if (v && form[k]?.querySelector(`option[value="${CSS.escape(v)}"]`)) form[k].value = v; }
+    form.dataset.source = "concierge";
+    const ref = document.getElementById("concept-ref");
+    ref.hidden = false;
+    ref.innerHTML = "<b>From the AI Concierge:</b> your brief is filled in below. Check it, add your details and send it when you're ready.";
+    form.message.dispatchEvent(new Event("input"));
+  };
+  if (q.get("from") === "concierge") fromConcierge();
+  window.addEventListener("bb-concierge-brief", fromConcierge);
   const rules = {
     name: (v) => v.trim() ? "" : "Please tell us your name.",
     email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Please enter a valid email address.",
@@ -159,17 +178,24 @@ document.querySelectorAll("[data-cx]").forEach((app) => {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const bad = Object.keys(rules).filter((n) => !check(n));
-    note.classList.toggle("ok", !bad.length);
+    note.classList.toggle("ok", !bad.length); // analytics reads this right after submit: a complete form, not delivery
     if (bad.length) { note.textContent = `Please check ${bad.length === 1 ? "one field" : `${bad.length} fields`} above.`; form[bad[0]].focus(); return; }
     if (form.website.value) return; // honeypot filled: silently ignore bots
     const endpoint = form.dataset.endpoint;
-    if (!endpoint) { note.textContent = "Everything looks complete. This local preview has no server connected, so your message has not been sent."; return; }
-    // Future delivery path (inactive until an endpoint is configured): see docs/CONTACT-DELIVERY-PLAN.md
+    if (!endpoint) { note.textContent = "Everything looks complete, but online sending isn't switched on yet, so your message has not been sent."; return; }
+    // Delivery: success is shown only when the server confirms it (see docs/AI-CONCIERGE.md).
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; note.textContent = "Sending…";
-    fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(form))) })
-      .then((r) => { if (!r.ok) throw new Error(r.status); note.textContent = "Thanks. Your message has been received and we'll reply within two working days."; form.reset(); })
-      .catch(() => { note.textContent = "Sorry, your message couldn't be sent. Please try again in a moment."; })
+    const body = { ...Object.fromEntries(new FormData(form)), t: Date.now() - loaded, source: form.dataset.source || "form" };
+    fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(async (r) => {
+        if (r.ok) { note.textContent = "Thanks. Your message has been received."; form.reset(); delete form.dataset.source; document.getElementById("concept-ref").hidden = true; return; }
+        note.classList.remove("ok");
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 422 && data.fields) { Object.keys(data.fields).filter((n) => rules[n]).forEach(check); note.textContent = "Please check the highlighted fields."; return; }
+        note.textContent = r.status === 429 ? "You've sent a few messages in a short time. Please try again in a minute." : "Sorry, your message couldn't be sent. Your text is still here, so please try again in a moment.";
+      })
+      .catch(() => { note.classList.remove("ok"); note.textContent = "Sorry, your message couldn't be sent. Your text is still here, so please try again in a moment."; })
       .finally(() => { btn.disabled = false; });
   });
 })();
