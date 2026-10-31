@@ -48,7 +48,7 @@
     },
     {
       id: "rauf", name: "Rauf K.", initials: "RK", age: 58, role: "Retired engineer",
-      sector: "Telecom", sectorHref: "/industries/telecom-subscriptions",
+      sector: "Telecom", sectorHref: "/industries",
       label: "The long-standing customer", journey: "Moving home internet to a new flat",
       goal: "Move the home internet to a new flat without a gap.",
       context: "Prefers to call. Uses the app only to pay bills.",
