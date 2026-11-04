@@ -196,7 +196,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -.025em; line-heig
 .hero { position: relative; padding: clamp(48px, 6vw, 96px) 0 clamp(40px, 5vw, 64px); overflow: clip; }
 .hero-grid-bg { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(245, 247, 250, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 247, 250, .045) 1px, transparent 1px); background-size: 80px 80px; mask-image: linear-gradient(180deg, #000, rgba(0,0,0,.5) 60%, transparent); -webkit-mask-image: linear-gradient(180deg, #000, rgba(0,0,0,.5) 60%, transparent); }
 .hero .wrap { position: relative; }
-.hero-title { font-size: clamp(44px, 8.4vw, 136px); line-height: 1.04; letter-spacing: -.05em; margin: 36px 0 0; }
+.hero-title { font-size: clamp(44px, calc((min(100vw, var(--wrap)) - 2 * var(--g)) / 11), 136px); line-height: 1.04; letter-spacing: -.05em; margin: 36px 0 0; }
 .hero-title .hl-line { white-space: nowrap; }
 .hero-title .hl-line:first-child { color: var(--text-2); }
 /* Hero signature — "the brief" is a measured scope under beyond; an electric-blue run leaves its end
