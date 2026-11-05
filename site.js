@@ -1,4 +1,4 @@
-// BEYOND BRIEF — navigation and the three art-directed motion moments.
+// Lumen Co — navigation and the three art-directed motion moments.
 const reduce = matchMedia("(prefers-reduced-motion: reduce)");
 const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
 

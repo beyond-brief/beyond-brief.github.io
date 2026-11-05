@@ -1,4 +1,4 @@
-// Beyond Brief AI Concierge: chat panel. Loaded only when an endpoint is configured (see build.mjs).
+// Lumen Co AI Concierge: chat panel. Loaded only when an endpoint is configured (see build.mjs).
 // Never opens on its own, including after moving between pages. The conversation lives in this tab only (sessionStorage) and is never
 // sent anywhere except the Concierge endpoint. A brief reaches the contact form only when the
 // visitor clicks "Add to contact form"; the form itself is still sent by the visitor.
@@ -11,7 +11,7 @@
   const fresh = () => ({ msgs: [], cards: {}, open: false });
   let S = store.get() || fresh(), busy = false, err = null, editing = false;
   S.open = false; // always starts closed: it never opens by itself, on any page
-  const STARTERS = ["What does Beyond Brief do?", "Which demo fits a bank?", "Help me write a project brief", "Do you have client case studies?"];
+  const STARTERS = ["What does Lumen Co do?", "Which demo fits a bank?", "Help me write a project brief", "Do you have client case studies?"];
   const KIND = { service: "Service", industry: "Industry", demo: "Demo · our prototype, synthetic data", concept: "Concept · our prototype", page: "Page" };
   const LABEL = { "fintech-digital-banking": "Fintech & Digital Banking", "beauty-wellness-services": "Beauty & Wellness", "hospitality-leisure": "Hospitality & Restaurants", "telecom-subscriptions": "Telecom", "education-edtech": "Education & EdTech", "retail-ecommerce": "Retail & E-commerce", other: "Other", "market-research-strategy": "Strategy & Market Research", "customer-experience": "Customer Experience, UX & Digital", "customer-growth-intelligence": "Customer Growth, Loyalty & Gamification", "campaigns-data-creative": "Campaigns, Data & Creative", "not-sure": "Not sure yet" };
   const I = {
@@ -26,9 +26,9 @@
   const root = document.createElement("div");
   root.className = "bc";
   root.innerHTML = `
-    <button type="button" class="bc-launch" aria-expanded="false" aria-controls="bc-panel"><span class="bc-dot" aria-hidden="true"></span><span>Ask Beyond Brief</span></button>
+    <button type="button" class="bc-launch" aria-expanded="false" aria-controls="bc-panel"><span class="bc-dot" aria-hidden="true"></span><span>Ask Lumen Co</span></button>
     <section class="bc-panel" id="bc-panel" role="dialog" aria-modal="false" aria-labelledby="bc-title" hidden>
-      <header class="bc-head"><div><h2 id="bc-title">AI Concierge</h2><p>Answers from the Beyond Brief website</p></div>
+      <header class="bc-head"><div><h2 id="bc-title">AI Concierge</h2><p>Answers from the Lumen Co website</p></div>
         <button type="button" class="bc-icon" data-bc-new aria-label="Start a new conversation" title="New conversation">${ic("reset")}</button>
         <button type="button" class="bc-icon" data-bc-close aria-label="Close">${ic("close")}</button></header>
       <div class="bc-log" role="log" aria-live="polite" aria-relevant="additions" tabindex="0" data-bc-log></div>
@@ -56,7 +56,7 @@
       <p class="bc-fine">Copies this summary, not the conversation, into the form. You review it and send it yourself.</p></article>`;
   }
   function render(focusLog) {
-    const intro = `<div class="bc-intro"><p><b>Hi, I'm Beyond Brief's AI assistant.</b> I can explain our services and work, point you to the right demo, and help you shape a project brief.</p>
+    const intro = `<div class="bc-intro"><p><b>Hi, I'm Lumen Co's AI assistant.</b> I can explain our services and work, point you to the right demo, and help you shape a project brief.</p>
       <p class="bc-disclose">I'm an AI and can make mistakes. Please don't share personal or sensitive information here. <a href="/privacy#concierge">How the Concierge works</a></p></div>`;
     const msgs = S.msgs.map((m, i) => m.role === "user" ? `<div class="bc-msg me" dir="auto">${fmt(m.content)}</div>` : `<div class="bc-msg ai" dir="auto">${fmt(m.content)}</div>${cardsHtml(i)}`).join("");
     const last = S.cards[S.msgs.length - 1], chips = !busy && !err ? (S.msgs.length ? (last?.suggestions || []) : STARTERS) : [];

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BEYOND BRIEF — design system v3
+   Lumen Co — design system v3
    Near-black + electric blue. Every surface defines its own text, label,
    border and button tokens, so states never inherit a colour that matches
    their background.
@@ -693,6 +693,11 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -.025em; line-heig
 .habits h3 { font-size: clamp(24px, 2.4vw, 34px); letter-spacing: -.03em; margin-bottom: 12px; }
 .habits p { margin: 0; color: var(--fg-2); font-size: 17px; max-width: 440px; }
 @media (max-width: 760px) { .habits { grid-template-columns: 1fr; } .habits div, .habits div:nth-child(even) { padding: 28px 0; border-right: 0; } }
+.purpose { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.purpose > div { padding: clamp(36px, 4vw, 56px) clamp(32px, 4vw, 64px) 0 0; }
+.purpose > div + div { padding-left: clamp(32px, 4vw, 64px); border-left: 1px solid var(--line); }
+.purpose .lead { margin: 20px 0 0; max-width: 560px; }
+@media (max-width: 760px) { .purpose { grid-template-columns: 1fr; } .purpose > div, .purpose > div + div { padding: 32px 0 0; border-left: 0; } .purpose > div + div { margin-top: 32px; border-top: 1px solid var(--line); } }
 .manifesto { font-size: clamp(30px, 4.2vw, 62px); line-height: 1.16; letter-spacing: -.035em; font-weight: 700; max-width: 22ch; }
 .manifesto em { font-style: normal; color: var(--acc-text); }
 .versus { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }

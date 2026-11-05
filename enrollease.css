@@ -1,6 +1,6 @@
 /* ==========================================================================
    EnrollEase demo: its own product identity (sky band, white sidebar card,
-   violet accent), set in the site's typeface so it sits inside Beyond Brief.
+   violet accent), set in the site's typeface so it sits inside Lumen Co.
    Everything is scoped to .ee.
    ========================================================================== */
 .ee {
@@ -455,7 +455,7 @@ html.ee-lock { overflow: hidden; }
   .ee-w-copy { padding: 28px 22px; }
 }
 
-/* ---------- Education page around the demo (Beyond Brief styles) ---------- */
+/* ---------- Education page around the demo (Lumen Co styles) ---------- */
 .edu-intro { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 24px clamp(32px, 6vw, 96px); align-items: end; }
 .edu-pos { margin: 10px 0 0; font: 700 13px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--acc-text); }
 .edu-intro .lead { margin: 0; }
