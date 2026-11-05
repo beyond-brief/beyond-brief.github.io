@@ -1,5 +1,3 @@
-# Lumen Co website
+# Lumen Co (old address)
 
-Built output of the Lumen Co website, published automatically from a private source repository. Don't edit it by hand.
-
-Live site: https://beyond-brief.github.io/
+This address has moved to https://lumen-co-studio.github.io/. Every page here redirects to the same page on the new address.
